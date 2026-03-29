@@ -38,6 +38,42 @@ const initialBudgetData = [
   { period: "Apr 24", carryover: 3000, income: 7826, misc: 1800, totalIncome: 12626, mortgage: 4210, water: 670, housekeeping: 0, preschool: 1900, cash: 0, chase: 2600, robinhood: 0, totalExpense: 9380, balance: 3246 },
 ];
 
+const businessPayPeriods = [
+  "Jan 2","Jan 16","Jan 30","Feb 13","Feb 27","Mar 13","Mar 27",
+  "Apr 10","Apr 24","May 8","May 22","Jun 5","Jun 19","Jul 3",
+  "Jul 17","Jul 31","Aug 14","Aug 28","Sep 11","Sep 25","Oct 9",
+  "Oct 23","Nov 6","Nov 20","Dec 4","Dec 18"
+];
+
+const initialBusinessData = [
+  { period:"Jan 2",  carryover:0,    consulting:0,     sunderMed:0,    miscTransfer:0, salary:0,     tax:0, healthInsurance:0,    autoLoan:0,   autoInsurance:0,   utilities:0,   chase:0,    misc:0,    capitalOne:0    },
+  { period:"Jan 16", carryover:200,  consulting:0,     sunderMed:3000, miscTransfer:0, salary:0,     tax:0, healthInsurance:0,    autoLoan:450, autoInsurance:250, utilities:175, chase:1000, misc:0,    capitalOne:0    },
+  { period:"Jan 30", carryover:8153, consulting:0,     sunderMed:0,    miscTransfer:0, salary:0,     tax:0, healthInsurance:0,    autoLoan:0,   autoInsurance:0,   utilities:0,   chase:0,    misc:0,    capitalOne:0    },
+  { period:"Feb 13", carryover:8153, consulting:0,     sunderMed:3000, miscTransfer:0, salary:0,     tax:0, healthInsurance:0,    autoLoan:450, autoInsurance:250, utilities:175, chase:1000, misc:0,    capitalOne:0    },
+  { period:"Feb 27", carryover:9278, consulting:14000, sunderMed:0,    miscTransfer:0, salary:11500, tax:0, healthInsurance:1900, autoLoan:0,   autoInsurance:252, utilities:160, chase:0,    misc:0,    capitalOne:1000 },
+  { period:"Mar 13", carryover:8016, consulting:0,     sunderMed:3000, miscTransfer:0, salary:0,     tax:0, healthInsurance:0,    autoLoan:450, autoInsurance:250, utilities:175, chase:1000, misc:0,    capitalOne:0    },
+  { period:"Mar 27", carryover:85,   consulting:14000, sunderMed:0,    miscTransfer:0, salary:11500, tax:0, healthInsurance:2000, autoLoan:0,   autoInsurance:252, utilities:160, chase:0,    misc:0,    capitalOne:0    },
+  { period:"Apr 10", carryover:173,  consulting:0,     sunderMed:3000, miscTransfer:0, salary:0,     tax:0, healthInsurance:0,    autoLoan:450, autoInsurance:250, utilities:175, chase:1000, misc:0,    capitalOne:0    },
+  { period:"Apr 24", carryover:117,  consulting:14000, sunderMed:0,    miscTransfer:0, salary:10765, tax:0, healthInsurance:0,    autoLoan:0,   autoInsurance:0,   utilities:140, chase:0,    misc:0,    capitalOne:2500 },
+  { period:"May 8",  carryover:712,  consulting:0,     sunderMed:3000, miscTransfer:0, salary:0,     tax:0, healthInsurance:0,    autoLoan:450, autoInsurance:250, utilities:0,   chase:1000, misc:0,    capitalOne:0    },
+  { period:"May 22", carryover:524,  consulting:14000, sunderMed:0,    miscTransfer:0, salary:11200, tax:0, healthInsurance:0,    autoLoan:0,   autoInsurance:0,   utilities:0,   chase:0,    misc:0,    capitalOne:2500 },
+  { period:"Jun 5",  carryover:0,    consulting:0,     sunderMed:0,    miscTransfer:0, salary:0,     tax:0, healthInsurance:0,    autoLoan:0,   autoInsurance:0,   utilities:0,   chase:0,    misc:0,    capitalOne:0    },
+  { period:"Jun 19", carryover:200,  consulting:0,     sunderMed:3000, miscTransfer:0, salary:0,     tax:0, healthInsurance:0,    autoLoan:450, autoInsurance:250, utilities:245, chase:1000, misc:0,    capitalOne:0    },
+  { period:"Jul 3",  carryover:5280, consulting:14000, sunderMed:0,    miscTransfer:0, salary:10764, tax:0, healthInsurance:2000, autoLoan:0,   autoInsurance:0,   utilities:0,   chase:0,    misc:240,  capitalOne:1500 },
+  { period:"Jul 17", carryover:4776, consulting:0,     sunderMed:3000, miscTransfer:0, salary:0,     tax:0, healthInsurance:0,    autoLoan:450, autoInsurance:252, utilities:185, chase:1500, misc:500,  capitalOne:0    },
+  { period:"Jul 31", carryover:4889, consulting:14000, sunderMed:0,    miscTransfer:0, salary:11200, tax:0, healthInsurance:2000, autoLoan:0,   autoInsurance:0,   utilities:0,   chase:0,    misc:0,    capitalOne:1000 },
+  { period:"Aug 14", carryover:4689, consulting:0,     sunderMed:3000, miscTransfer:0, salary:0,     tax:0, healthInsurance:0,    autoLoan:0,   autoInsurance:0,   utilities:0,   chase:1000, misc:0,    capitalOne:0    },
+  { period:"Aug 28", carryover:1500, consulting:14000, sunderMed:0,    miscTransfer:0, salary:11500, tax:0, healthInsurance:2000, autoLoan:450, autoInsurance:252, utilities:185, chase:0,    misc:0,    capitalOne:1000 },
+  { period:"Sep 11", carryover:113,  consulting:0,     sunderMed:3000, miscTransfer:0, salary:0,     tax:0, healthInsurance:0,    autoLoan:0,   autoInsurance:0,   utilities:0,   chase:1000, misc:0,    capitalOne:0    },
+  { period:"Sep 25", carryover:1367, consulting:14000, sunderMed:0,    miscTransfer:0, salary:11200, tax:0, healthInsurance:1900, autoLoan:0,   autoInsurance:0,   utilities:0,   chase:0,    misc:0,    capitalOne:1000 },
+  { period:"Oct 9",  carryover:975,  consulting:0,     sunderMed:3000, miscTransfer:0, salary:0,     tax:0, healthInsurance:0,    autoLoan:450, autoInsurance:252, utilities:185, chase:1000, misc:0,    capitalOne:1500 },
+  { period:"Oct 23", carryover:588,  consulting:14000, sunderMed:0,    miscTransfer:0, salary:11200, tax:0, healthInsurance:1900, autoLoan:0,   autoInsurance:0,   utilities:0,   chase:0,    misc:0,    capitalOne:1000 },
+  { period:"Nov 6",  carryover:488,  consulting:0,     sunderMed:3000, miscTransfer:0, salary:0,     tax:0, healthInsurance:0,    autoLoan:0,   autoInsurance:0,   utilities:0,   chase:1000, misc:0,    capitalOne:0    },
+  { period:"Nov 20", carryover:2488, consulting:14000, sunderMed:0,    miscTransfer:0, salary:11200, tax:0, healthInsurance:1900, autoLoan:450, autoInsurance:252, utilities:185, chase:0,    misc:0,    capitalOne:1000 },
+  { period:"Dec 4",  carryover:1000, consulting:14000, sunderMed:0,    miscTransfer:0, salary:11200, tax:0, healthInsurance:0,    autoLoan:450, autoInsurance:252, utilities:185, chase:1000, misc:1000, capitalOne:0    },
+  { period:"Dec 18", carryover:913,  consulting:0,     sunderMed:0,    miscTransfer:0, salary:0,     tax:0, healthInsurance:0,    autoLoan:0,   autoInsurance:0,   utilities:0,   chase:0,    misc:0,    capitalOne:1000 },
+];
+
 const netWorthItems = [
   { name: "Savings", value: 240000 },
   { name: "Robinhood", value: 0 },
@@ -179,7 +215,7 @@ const Btn = ({ onClick, children, variant = "primary", style = {} }) => (
 );
 
 // ── localStorage helpers ─────────────────────────────────────
-const STORAGE_KEYS = { accounts: "budget_accounts", budget: "budget_data", netWorth: "budget_networth" };
+const STORAGE_KEYS = { accounts: "budget_accounts", budget: "budget_data", netWorth: "budget_networth", businessBudget: "business_budget" };
 
 const loadState = (key, fallback) => {
   try {
@@ -198,7 +234,16 @@ const saveState = (key, value) => {
 export default function BudgetDashboard() {
   const [tab, setTab] = useState("overview");
   const [accounts, setAccounts] = useState(() => loadState(STORAGE_KEYS.accounts, initialAccounts));
-  const [budget, setBudget] = useState(() => loadState(STORAGE_KEYS.budget, initialBudgetData));
+  const [budget, setBudget] = useState(() => {
+    const saved = loadState(STORAGE_KEYS.budget, initialBudgetData);
+    const savedPeriods = new Set(saved.map(r => r.period));
+    const missing = payPeriods
+      .filter(p => !savedPeriods.has(p))
+      .map(p => ({ period: p, carryover: 0, income: 0, misc: 0, totalIncome: 0, mortgage: 0, water: 0, housekeeping: 0, preschool: 0, cash: 0, chase: 0, robinhood: 0, totalExpense: 0, balance: 0 }));
+    if (!missing.length) return saved;
+    return [...saved, ...missing].sort((a, b) => payPeriods.indexOf(a.period) - payPeriods.indexOf(b.period));
+  });
+  const [businessBudget, setBusinessBudget] = useState(() => loadState(STORAGE_KEYS.businessBudget, initialBusinessData));
   const [editingAccount, setEditingAccount] = useState(null);
   const [editingPeriod, setEditingPeriod] = useState(null);
   const [addingAccount, setAddingAccount] = useState(false);
@@ -207,6 +252,7 @@ export default function BudgetDashboard() {
   // ── Persist to localStorage on change ────────────────────
   useEffect(() => { saveState(STORAGE_KEYS.accounts, accounts); }, [accounts]);
   useEffect(() => { saveState(STORAGE_KEYS.budget, budget); }, [budget]);
+  useEffect(() => { saveState(STORAGE_KEYS.businessBudget, businessBudget); }, [businessBudget]);
 
   // ── Derived Data ─────────────────────────────────────────
   const totalDebt = useMemo(() =>
@@ -242,6 +288,64 @@ export default function BudgetDashboard() {
 
   const netWorthPie = useMemo(() =>
     netWorthItems.filter(i => i.value > 0).map(i => ({ ...i })), []);
+
+  const MONTH_MAP = { Jan:"January", Feb:"February", Mar:"March", Apr:"April", May:"May", Jun:"June", Jul:"July", Aug:"August", Sep:"September", Oct:"October", Nov:"November", Dec:"December" };
+  const monthlyBudget = useMemo(() => {
+    const groups = [];
+    const seen = {};
+    budget.forEach(row => {
+      const abbr = row.period.split(" ")[0];
+      const name = MONTH_MAP[abbr] || abbr;
+      if (!seen[name]) { seen[name] = true; groups.push({ name, rows: [] }); }
+      groups[groups.length - 1].rows.push(row);
+    });
+    return groups.map(({ name, rows }) => {
+      const carryover   = rows[0].carryover;
+      const income      = rows.reduce((s, r) => s + r.income, 0);
+      const misc        = rows.reduce((s, r) => s + r.misc, 0);
+      const mortgage    = rows.reduce((s, r) => s + r.mortgage, 0);
+      const water       = rows.reduce((s, r) => s + r.water, 0);
+      const housekeeping = rows.reduce((s, r) => s + r.housekeeping, 0);
+      const preschool   = rows.reduce((s, r) => s + r.preschool, 0);
+      const cash        = rows.reduce((s, r) => s + r.cash, 0);
+      const chase       = rows.reduce((s, r) => s + r.chase, 0);
+      const robinhood   = rows.reduce((s, r) => s + r.robinhood, 0);
+      const totalIncome  = carryover + income + misc;
+      const totalExpense = mortgage + water + housekeeping + preschool + cash + chase + robinhood;
+      return { period: name, carryover, income, misc, totalIncome, mortgage, water, housekeeping, preschool, cash, chase, robinhood, totalExpense, balance: totalIncome - totalExpense };
+    });
+  }, [budget]);
+
+  const monthlyBusinessBudget = useMemo(() => {
+    const groups = [];
+    const seen = {};
+    businessBudget.forEach(row => {
+      const abbr = row.period.split(" ")[0];
+      const name = MONTH_MAP[abbr] || abbr;
+      if (!seen[name]) { seen[name] = true; groups.push({ name, rows: [] }); }
+      groups[groups.length - 1].rows.push(row);
+    });
+    return groups.map(({ name, rows }) => {
+      const carryover       = rows[0].carryover;
+      const consulting      = rows.reduce((s, r) => s + r.consulting, 0);
+      const sunderMed       = rows.reduce((s, r) => s + r.sunderMed, 0);
+      const miscTransfer    = rows.reduce((s, r) => s + r.miscTransfer, 0);
+      const salary          = rows.reduce((s, r) => s + r.salary, 0);
+      const tax             = rows.reduce((s, r) => s + r.tax, 0);
+      const healthInsurance = rows.reduce((s, r) => s + r.healthInsurance, 0);
+      const autoLoan        = rows.reduce((s, r) => s + r.autoLoan, 0);
+      const autoInsurance   = rows.reduce((s, r) => s + r.autoInsurance, 0);
+      const utilities       = rows.reduce((s, r) => s + r.utilities, 0);
+      const chase           = rows.reduce((s, r) => s + r.chase, 0);
+      const misc            = rows.reduce((s, r) => s + r.misc, 0);
+      const capitalOne      = rows.reduce((s, r) => s + r.capitalOne, 0);
+      const totalIncome     = carryover + consulting + sunderMed + miscTransfer;
+      const totalExpense    = salary + tax + healthInsurance + autoLoan + autoInsurance + utilities + chase + misc + capitalOne;
+      return { period: name, carryover, consulting, sunderMed, miscTransfer, totalIncome,
+               salary, tax, healthInsurance, autoLoan, autoInsurance, utilities, chase, misc, capitalOne,
+               totalExpense, balance: totalIncome - totalExpense };
+    });
+  }, [businessBudget]);
 
   // ── Handlers ─────────────────────────────────────────────
   const updateAccount = useCallback((id, newBalance) => {
@@ -295,6 +399,7 @@ export default function BudgetDashboard() {
           {[
             ["overview", "Overview"],
             ["budget", "Budget"],
+            ["business", "Business"],
             ["balances", "Balances"],
             ["networth", "Net Worth"],
           ].map(([key, label]) => (
@@ -315,9 +420,9 @@ export default function BudgetDashboard() {
 
           <div style={{ display: "flex", gap: 18, marginBottom: 22, flexWrap: "wrap" }}>
             <Card style={{ flex: "2 1 450px" }}>
-              <CardTitle>Income vs Expenses by Pay Period</CardTitle>
+              <CardTitle>Income vs Expenses by Month</CardTitle>
               <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={budget}>
+                <AreaChart data={monthlyBudget}>
                   <defs>
                     <linearGradient id="incG" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor={COLORS.green} stopOpacity={0.35} />
@@ -379,8 +484,7 @@ export default function BudgetDashboard() {
       {tab === "budget" && (
         <Card>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <CardTitle>Personal Budget — 2026 (Bi-Weekly)</CardTitle>
-            <div style={{ fontSize: 12, color: COLORS.textDim }}>Click any row to edit</div>
+            <CardTitle>Personal Budget — 2026 (Monthly)</CardTitle>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 900 }}>
@@ -396,16 +500,13 @@ export default function BudgetDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {budget.map((row, i) => (
+                {monthlyBudget.map((row, i) => (
                   <tr
                     key={i}
-                    onClick={() => setEditingPeriod(i)}
                     style={{
-                      borderBottom: `1px solid ${COLORS.border}22`, cursor: "pointer",
+                      borderBottom: `1px solid ${COLORS.border}22`,
                       transition: "background 0.15s",
                     }}
-                    onMouseEnter={e => e.currentTarget.style.background = "rgba(59,130,246,0.08)"}
-                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                   >
                     <td style={{ padding: "10px 8px", color: COLORS.textMuted, fontWeight: 600 }}>{row.period}</td>
                     {[row.carryover, row.income, row.misc, row.totalIncome, row.mortgage, row.water, row.housekeeping, row.preschool, row.cash, row.chase, row.robinhood, row.totalExpense, row.balance].map((val, j) => (
@@ -425,7 +526,7 @@ export default function BudgetDashboard() {
                 <tr style={{ borderTop: `2px solid ${COLORS.accent}` }}>
                   <td style={{ padding: "12px 8px", fontWeight: 700, color: COLORS.textMuted }}>TOTALS</td>
                   {(() => {
-                    const sums = budget.reduce((acc, r) => ({
+                    const sums = monthlyBudget.reduce((acc, r) => ({
                       carryover: acc.carryover + r.carryover, income: acc.income + r.income, misc: acc.misc + r.misc,
                       totalIncome: acc.totalIncome + r.totalIncome, mortgage: acc.mortgage + r.mortgage,
                       water: acc.water + r.water, housekeeping: acc.housekeeping + r.housekeeping,
@@ -437,6 +538,75 @@ export default function BudgetDashboard() {
                       <td key={j} style={{
                         textAlign: "right", padding: "12px 8px", fontWeight: 700,
                         color: j === 3 ? COLORS.green : j === 11 ? COLORS.pink : COLORS.text,
+                        fontFamily: "monospace", fontSize: 13,
+                      }}>{fmtFull(v)}</td>
+                    ));
+                  })()}
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {/* ════ BUSINESS TAB ════ */}
+      {tab === "business" && (
+        <Card>
+          <div style={{ marginBottom: 16 }}>
+            <CardTitle>Business Budget — 2026 (Monthly)</CardTitle>
+          </div>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 1100 }}>
+              <thead>
+                <tr style={{ borderBottom: `2px solid ${COLORS.border}` }}>
+                  {["Period","Carryover","Consulting","SunderMed","Misc","Total In","Salary","Tax","Health","Auto Loan","Auto Ins","Utilities","Chase","Misc","Cap One","Total Exp","Balance"].map(h => (
+                    <th key={h} style={{
+                      textAlign: h === "Period" ? "left" : "right", padding: "10px 8px",
+                      color: COLORS.textDim, fontWeight: 600, fontSize: 11, whiteSpace: "nowrap",
+                      textTransform: "uppercase", letterSpacing: 0.3,
+                    }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {monthlyBusinessBudget.map((row, i) => (
+                  <tr key={i} style={{ borderBottom: `1px solid ${COLORS.border}22`, transition: "background 0.15s" }}>
+                    <td style={{ padding: "10px 8px", color: COLORS.textMuted, fontWeight: 600 }}>{row.period}</td>
+                    {[row.carryover, row.consulting, row.sunderMed, row.miscTransfer, row.totalIncome,
+                      row.salary, row.tax, row.healthInsurance, row.autoLoan, row.autoInsurance,
+                      row.utilities, row.chase, row.misc, row.capitalOne, row.totalExpense, row.balance].map((val, j) => (
+                      <td key={j} style={{
+                        textAlign: "right", padding: "10px 8px",
+                        color: j === 4 ? COLORS.green : j === 14 ? COLORS.pink : j === 15 ? (val < 0 ? COLORS.red : COLORS.green) : COLORS.text,
+                        fontWeight: [4, 14, 15].includes(j) ? 700 : 400,
+                        fontFamily: "monospace", fontSize: 13,
+                      }}>
+                        {val === 0 ? "—" : fmtFull(val)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr style={{ borderTop: `2px solid ${COLORS.accent}` }}>
+                  <td style={{ padding: "12px 8px", fontWeight: 700, color: COLORS.textMuted }}>TOTALS</td>
+                  {(() => {
+                    const s = monthlyBusinessBudget.reduce((acc, r) => ({
+                      carryover: acc.carryover + r.carryover, consulting: acc.consulting + r.consulting,
+                      sunderMed: acc.sunderMed + r.sunderMed, miscTransfer: acc.miscTransfer + r.miscTransfer,
+                      totalIncome: acc.totalIncome + r.totalIncome, salary: acc.salary + r.salary,
+                      tax: acc.tax + r.tax, healthInsurance: acc.healthInsurance + r.healthInsurance,
+                      autoLoan: acc.autoLoan + r.autoLoan, autoInsurance: acc.autoInsurance + r.autoInsurance,
+                      utilities: acc.utilities + r.utilities, chase: acc.chase + r.chase,
+                      misc: acc.misc + r.misc, capitalOne: acc.capitalOne + r.capitalOne,
+                      totalExpense: acc.totalExpense + r.totalExpense, balance: acc.balance + r.balance,
+                    }), { carryover:0, consulting:0, sunderMed:0, miscTransfer:0, totalIncome:0, salary:0, tax:0, healthInsurance:0, autoLoan:0, autoInsurance:0, utilities:0, chase:0, misc:0, capitalOne:0, totalExpense:0, balance:0 });
+                    return [s.carryover, s.consulting, s.sunderMed, s.miscTransfer, s.totalIncome,
+                            s.salary, s.tax, s.healthInsurance, s.autoLoan, s.autoInsurance,
+                            s.utilities, s.chase, s.misc, s.capitalOne, s.totalExpense, s.balance].map((v, j) => (
+                      <td key={j} style={{
+                        textAlign: "right", padding: "12px 8px", fontWeight: 700,
+                        color: j === 4 ? COLORS.green : j === 14 ? COLORS.pink : COLORS.text,
                         fontFamily: "monospace", fontSize: 13,
                       }}>{fmtFull(v)}</td>
                     ));
