@@ -248,6 +248,9 @@ export default function BudgetDashboard() {
   const [editingPeriod, setEditingPeriod] = useState(null);
   const [addingAccount, setAddingAccount] = useState(false);
   const [newAccount, setNewAccount] = useState({ name: "", type: "Checking", balance: 0 });
+  const [overviewRange, setOverviewRange] = useState("ytd");
+  const [overviewMonth, setOverviewMonth] = useState("March");
+  const [editingMonth, setEditingMonth] = useState(null);
 
   // ── Persist to localStorage on change ────────────────────
   useEffect(() => { saveState(STORAGE_KEYS.accounts, accounts); }, [accounts]);
@@ -259,6 +262,8 @@ export default function BudgetDashboard() {
     accounts.filter(a => a.type === "Credit Card").reduce((s, a) => s + a.balance, 0), [accounts]);
   const totalCash = useMemo(() =>
     accounts.filter(a => ["Checking", "Savings"].includes(a.type)).reduce((s, a) => s + a.balance, 0), [accounts]);
+  const totalChecking = useMemo(() =>
+    accounts.filter(a => a.type === "Checking").reduce((s, a) => s + a.balance, 0), [accounts]);
   const totalInvestments = useMemo(() =>
     accounts.filter(a => ["Investment", "Retirement"].includes(a.type)).reduce((s, a) => s + a.balance, 0), [accounts]);
   const totalAssets = useMemo(() =>
@@ -271,6 +276,14 @@ export default function BudgetDashboard() {
   const totalIncomeAll = useMemo(() => budget.reduce((s, b) => s + b.totalIncome, 0), [budget]);
   const totalExpenseAll = useMemo(() => budget.reduce((s, b) => s + b.totalExpense, 0), [budget]);
   const latestBalance = budget.length > 0 ? budget[budget.length - 1].balance : 0;
+
+  const overviewData = useMemo(() => {
+    if (overviewRange === "ytd") return monthlyBudget.filter((_, i) => i <= CURRENT_MONTH_IDX);
+    if (overviewRange === "month") return monthlyBudget.filter(r => r.period === overviewMonth);
+    return monthlyBudget;
+  }, [overviewRange, overviewMonth, monthlyBudget]);
+  const overviewIncome = useMemo(() => overviewData.reduce((s, r) => s + r.income + r.misc, 0), [overviewData]);
+  const overviewExpenses = useMemo(() => overviewData.reduce((s, r) => s + r.totalExpense, 0), [overviewData]);
 
   const expenseBreakdown = useMemo(() => {
     const cats = { Mortgage: 0, Utilities: 0, Housekeeping: 0, "Pre-school": 0, Cash: 0, "Chase Payment": 0, "Robinhood/Fidelity": 0 };
@@ -290,6 +303,8 @@ export default function BudgetDashboard() {
     netWorthItems.filter(i => i.value > 0).map(i => ({ ...i })), []);
 
   const MONTH_MAP = { Jan:"January", Feb:"February", Mar:"March", Apr:"April", May:"May", Jun:"June", Jul:"July", Aug:"August", Sep:"September", Oct:"October", Nov:"November", Dec:"December" };
+  const MONTH_ORDER = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const CURRENT_MONTH_IDX = 2; // March 2026
   const monthlyBudget = useMemo(() => {
     const groups = [];
     const seen = {};
@@ -411,18 +426,42 @@ export default function BudgetDashboard() {
       {/* ════ OVERVIEW TAB ════ */}
       {tab === "overview" && (
         <>
+          {/* Period selector */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 18, alignItems: "center", flexWrap: "wrap" }}>
+            {[["ytd","YTD"],["month","Monthly"],["forecast","Full Year"]].map(([r,label]) => (
+              <button key={r} onClick={() => setOverviewRange(r)} style={{
+                padding: "7px 16px", borderRadius: 8, border: "none", cursor: "pointer",
+                fontWeight: 600, fontSize: 13,
+                background: overviewRange === r ? COLORS.accent : "#0f2035",
+                color: overviewRange === r ? "#fff" : COLORS.textMuted,
+              }}>{label}</button>
+            ))}
+            {overviewRange === "month" && (
+              <select value={overviewMonth} onChange={e => setOverviewMonth(e.target.value)} style={{
+                padding: "7px 12px", borderRadius: 8, border: `1px solid ${COLORS.border}`,
+                background: "#091525", color: COLORS.text, fontSize: 13, cursor: "pointer",
+              }}>
+                {MONTH_ORDER.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            )}
+          </div>
+
           <div style={{ display: "flex", gap: 14, marginBottom: 22, flexWrap: "wrap" }}>
-            <KPI title="Total Income (YTD)" value={fmtFull(totalIncomeAll)} subtitle={`${budget.length} pay periods tracked`} color={COLORS.green} />
-            <KPI title="Total Expenses (YTD)" value={fmtFull(totalExpenseAll)} subtitle={`Avg ${fmtFull(totalExpenseAll / budget.length)}/period`} color={COLORS.pink} />
-            <KPI title="Current Balance" value={fmtFull(latestBalance)} negative={latestBalance < 0} color={COLORS.accent} />
-            <KPI title="Net Worth" value={fmt(netWorth)} color={COLORS.accent2} />
+            <KPI title="Income" value={fmtFull(overviewIncome)}
+              subtitle={overviewRange === "ytd" ? "Jan – Mar 2026" : overviewRange === "month" ? overviewMonth : "Full Year 2026"}
+              color={COLORS.green} />
+            <KPI title="Expenses" value={fmtFull(overviewExpenses)}
+              subtitle={overviewRange === "ytd" ? "Jan – Mar 2026" : overviewRange === "month" ? overviewMonth : "Full Year 2026"}
+              color={COLORS.pink} />
+            <KPI title="Checking Balance" value={fmtFull(totalChecking)} subtitle="Sum of checking accounts" color={COLORS.accent} />
+            <KPI title="Credit Card Balance" value={fmtFull(totalDebt)} negative={totalDebt > 0} color={COLORS.red} />
           </div>
 
           <div style={{ display: "flex", gap: 18, marginBottom: 22, flexWrap: "wrap" }}>
             <Card style={{ flex: "2 1 450px" }}>
               <CardTitle>Income vs Expenses by Month</CardTitle>
               <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={monthlyBudget}>
+                <AreaChart data={overviewData}>
                   <defs>
                     <linearGradient id="incG" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor={COLORS.green} stopOpacity={0.35} />
@@ -490,9 +529,9 @@ export default function BudgetDashboard() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 900 }}>
               <thead>
                 <tr style={{ borderBottom: `2px solid ${COLORS.border}` }}>
-                  {["Period", "Carryover", "Income", "Misc", "Total In", "Mortgage", "Water", "Housekeep", "Pre-school", "Cash", "Chase", "Robinhood", "Total Exp", "Balance"].map(h => (
+                  {["Period", "Carryover", "Income", "Misc", "Total In", "Mortgage", "Water", "Housekeep", "Pre-school", "Cash", "Chase", "Robinhood", "Total Exp", "Balance", ""].map(h => (
                     <th key={h} style={{
-                      textAlign: h === "Period" ? "left" : "right", padding: "10px 8px",
+                      textAlign: h === "Period" || h === "" ? "left" : "right", padding: "10px 8px",
                       color: COLORS.textDim, fontWeight: 600, fontSize: 11, whiteSpace: "nowrap",
                       textTransform: "uppercase", letterSpacing: 0.3,
                     }}>{h}</th>
@@ -519,6 +558,12 @@ export default function BudgetDashboard() {
                         {val === 0 ? "—" : fmtFull(val)}
                       </td>
                     ))}
+                    <td style={{ padding: "10px 8px" }}>
+                      <button onClick={() => setEditingMonth(row.period)} style={{
+                        padding: "4px 12px", borderRadius: 6, border: "none", cursor: "pointer",
+                        background: COLORS.accent, color: "#fff", fontSize: 11, fontWeight: 600,
+                      }}>Edit</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -756,6 +801,42 @@ export default function BudgetDashboard() {
           </div>
         </Modal>
       )}
+
+      {editingMonth && (() => {
+        const periods = budget
+          .map((row, idx) => ({ row, idx }))
+          .filter(({ row }) => {
+            const abbr = row.period.split(" ")[0];
+            return MONTH_MAP[abbr] === editingMonth;
+          });
+        return (
+          <Modal title={`Edit ${editingMonth}`} onClose={() => setEditingMonth(null)}>
+            {periods.map(({ row, idx }, pi) => (
+              <div key={idx}>
+                {pi > 0 && <hr style={{ border: "none", borderTop: `1px solid ${COLORS.border}`, margin: "16px 0" }} />}
+                <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.accent, marginBottom: 12 }}>
+                  Period: {row.period}
+                </div>
+                <div style={{ fontSize: 12, color: COLORS.textDim, marginBottom: 8, textTransform: "uppercase", fontWeight: 600 }}>Income</div>
+                <Input label="Carryover" value={row.carryover} onChange={v => updatePeriod(idx, "carryover", v)} />
+                <Input label="Income" value={row.income} onChange={v => updatePeriod(idx, "income", v)} />
+                <Input label="Misc Transfer" value={row.misc} onChange={v => updatePeriod(idx, "misc", v)} />
+                <div style={{ fontSize: 12, color: COLORS.textDim, margin: "12px 0 8px", textTransform: "uppercase", fontWeight: 600 }}>Expenses</div>
+                <Input label="Mortgage" value={row.mortgage} onChange={v => updatePeriod(idx, "mortgage", v)} />
+                <Input label="Water & Power" value={row.water} onChange={v => updatePeriod(idx, "water", v)} />
+                <Input label="Housekeeping" value={row.housekeeping} onChange={v => updatePeriod(idx, "housekeeping", v)} />
+                <Input label="Pre-school" value={row.preschool} onChange={v => updatePeriod(idx, "preschool", v)} />
+                <Input label="Cash Expense" value={row.cash} onChange={v => updatePeriod(idx, "cash", v)} />
+                <Input label="Chase Payment" value={row.chase} onChange={v => updatePeriod(idx, "chase", v)} />
+                <Input label="Robinhood / Fidelity" value={row.robinhood} onChange={v => updatePeriod(idx, "robinhood", v)} />
+              </div>
+            ))}
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>
+              <Btn onClick={() => setEditingMonth(null)}>Done</Btn>
+            </div>
+          </Modal>
+        );
+      })()}
 
       {addingAccount && (
         <Modal title="Add New Account" onClose={() => setAddingAccount(false)}>
