@@ -363,9 +363,9 @@ export default function BudgetDashboard() {
   }, [businessBudget]);
 
   // ── Handlers ─────────────────────────────────────────────
-  const updateAccount = useCallback((id, newBalance) => {
+  const updateAccount = useCallback((updated) => {
     setAccounts(prev => prev.map(a =>
-      a.id === id ? { ...a, balance: newBalance, lastUpdated: new Date().toISOString().split("T")[0] } : a
+      a.id === updated.id ? { ...updated, lastUpdated: new Date().toISOString().split("T")[0] } : a
     ));
   }, []);
 
@@ -773,11 +773,27 @@ export default function BudgetDashboard() {
 
       {/* ════ MODALS ════ */}
       {editingAccount && (
-        <Modal title={`Update ${editingAccount.name}`} onClose={() => setEditingAccount(null)}>
-          <Input label="New Balance" value={editingAccount.balance} onChange={v => setEditingAccount({ ...editingAccount, balance: v })} />
+        <Modal title="Edit Account" onClose={() => setEditingAccount(null)}>
+          <Input label="Account Name" type="text" value={editingAccount.name} onChange={v => setEditingAccount({ ...editingAccount, name: v })} />
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: "block", fontSize: 12, color: COLORS.textMuted, marginBottom: 4 }}>Type</label>
+            <select
+              value={editingAccount.type}
+              onChange={e => setEditingAccount({ ...editingAccount, type: e.target.value })}
+              style={{
+                width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${COLORS.border}`,
+                background: "#091525", color: COLORS.text, fontSize: 14,
+              }}
+            >
+              {["Checking", "Savings", "Credit Card", "Investment", "Retirement", "Asset"].map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+          <Input label="Balance" value={editingAccount.balance} onChange={v => setEditingAccount({ ...editingAccount, balance: v })} />
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
             <Btn variant="secondary" onClick={() => setEditingAccount(null)}>Cancel</Btn>
-            <Btn onClick={() => { updateAccount(editingAccount.id, editingAccount.balance); setEditingAccount(null); }}>Save</Btn>
+            <Btn onClick={() => { updateAccount(editingAccount); setEditingAccount(null); }}>Save</Btn>
           </div>
         </Modal>
       )}
