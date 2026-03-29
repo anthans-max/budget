@@ -277,14 +277,6 @@ export default function BudgetDashboard() {
   const totalExpenseAll = useMemo(() => budget.reduce((s, b) => s + b.totalExpense, 0), [budget]);
   const latestBalance = budget.length > 0 ? budget[budget.length - 1].balance : 0;
 
-  const overviewData = useMemo(() => {
-    if (overviewRange === "ytd") return monthlyBudget.filter((_, i) => i <= CURRENT_MONTH_IDX);
-    if (overviewRange === "month") return monthlyBudget.filter(r => r.period === overviewMonth);
-    return monthlyBudget;
-  }, [overviewRange, overviewMonth, monthlyBudget]);
-  const overviewIncome = useMemo(() => overviewData.reduce((s, r) => s + r.income + r.misc, 0), [overviewData]);
-  const overviewExpenses = useMemo(() => overviewData.reduce((s, r) => s + r.totalExpense, 0), [overviewData]);
-
   const expenseBreakdown = useMemo(() => {
     const cats = { Mortgage: 0, Utilities: 0, Housekeeping: 0, "Pre-school": 0, Cash: 0, "Chase Payment": 0, "Robinhood/Fidelity": 0 };
     budget.forEach(b => {
@@ -330,6 +322,14 @@ export default function BudgetDashboard() {
       return { period: name, carryover, income, misc, totalIncome, mortgage, water, housekeeping, preschool, cash, chase, robinhood, totalExpense, balance: totalIncome - totalExpense };
     });
   }, [budget]);
+
+  const overviewData = useMemo(() => {
+    if (overviewRange === "ytd") return monthlyBudget.filter((_, i) => i <= CURRENT_MONTH_IDX);
+    if (overviewRange === "month") return monthlyBudget.filter(r => r.period === overviewMonth);
+    return monthlyBudget;
+  }, [overviewRange, overviewMonth, monthlyBudget]);
+  const overviewIncome = useMemo(() => overviewData.reduce((s, r) => s + r.income + r.misc, 0), [overviewData]);
+  const overviewExpenses = useMemo(() => overviewData.reduce((s, r) => s + r.totalExpense, 0), [overviewData]);
 
   const monthlyBusinessBudget = useMemo(() => {
     const groups = [];
