@@ -269,6 +269,15 @@ const Input = ({ label, value, onChange, type = "number" }) => {
         inputMode="decimal"
         value={display}
         onFocus={() => { focused.current = true; }}
+        onPaste={e => {
+          e.preventDefault();
+          const pasted = e.clipboardData.getData("text").replace(/[$,\s]/g, "");
+          if (pasted === "" || /^-?\d*\.?\d*$/.test(pasted)) {
+            setDisplay(pasted);
+            const num = parseFloat(pasted);
+            if (!isNaN(num)) onChange(num);
+          }
+        }}
         onChange={e => {
           const raw = e.target.value;
           if (raw === "" || /^-?\d*\.?\d*$/.test(raw)) {
