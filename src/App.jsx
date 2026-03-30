@@ -637,8 +637,8 @@ export default function BudgetDashboard() {
             <CardTitle>Personal Budget — 2026 (Monthly)</CardTitle>
             <Btn variant="primary" onClick={() => setManagingCategories(true)}>Manage Categories</Btn>
           </div>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: Math.max(800, 200 + personalCategories.length * 90) }}>
+          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: Math.max(900, 300 + personalCategories.length * 100) }}>
               <thead>
                 <tr>
                   {["Period", "Carryover", "Income", "Misc", "Total In",
