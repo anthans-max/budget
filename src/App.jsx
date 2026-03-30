@@ -638,7 +638,7 @@ export default function BudgetDashboard() {
             <Btn variant="primary" onClick={() => setManagingCategories(true)}>Manage Categories</Btn>
           </div>
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 900 }}>
+            <table style={{ borderCollapse: "collapse", fontSize: 11, minWidth: Math.max(900, 640 + personalCategories.length * 120) }}>
               <thead>
                 <tr>
                   {["Period", "Carryover", "Income", "Misc", "Total In",
