@@ -79,6 +79,24 @@ const initialBusinessData = [
   { period:"Dec 18", carryover:913,  consulting:0,     sunderMed:0,    miscTransfer:0, salary:0,     tax:0, healthInsurance:0,    autoLoan:0,   autoInsurance:0,   utilities:0,   chase:0,    misc:0,    capitalOne:1000 },
 ];
 
+const MONTH_ABBR_MAP = { Jan:"January", Feb:"February", Mar:"March", Apr:"April", May:"May", Jun:"June", Jul:"July", Aug:"August", Sep:"September", Oct:"October", Nov:"November", Dec:"December" };
+const initialMonthlyBusinessData = (() => {
+  const groups = [];
+  const seen = {};
+  initialBusinessData.forEach(row => {
+    const abbr = row.period.split(" ")[0];
+    const name = MONTH_ABBR_MAP[abbr] || abbr;
+    if (!seen[name]) { seen[name] = true; groups.push({ name, rows: [] }); }
+    groups[groups.length - 1].rows.push(row);
+  });
+  return groups.map(({ name, rows }) => {
+    const result = { period: name, carryover: rows[0].carryover };
+    ["consulting","sunderMed","miscTransfer","salary","tax","healthInsurance","autoLoan","autoInsurance","utilities","chase","misc","capitalOne"]
+      .forEach(f => { result[f] = rows.reduce((s, r) => s + (r[f] || 0), 0); });
+    return result;
+  });
+})();
+
 const netWorthItems = [
   { name: "Savings", value: 240000 },
   { name: "Robinhood", value: 0 },
@@ -318,7 +336,7 @@ const Btn = ({ onClick, children, variant = "primary", style = {} }) => (
 );
 
 // ── localStorage helpers ─────────────────────────────────────
-const STORAGE_KEYS = { accounts: "budget_accounts", budget: "budget_data_monthly", netWorth: "budget_networth", businessBudget: "business_budget", personalCategories: "personal_categories_v3" };
+const STORAGE_KEYS = { accounts: "budget_accounts", budget: "budget_data_monthly", netWorth: "budget_networth", businessBudget: "business_budget", personalCategories: "personal_categories_v3", businessCategories: "business_categories_v1", businessMonthly: "business_monthly_v1" };
 
 const loadState = (key, fallback) => {
   try {
@@ -356,6 +374,26 @@ export default function BudgetDashboard() {
   const [editingMonthDraft, setEditingMonthDraft] = useState(null);
   const [managingCategories, setManagingCategories] = useState(false);
   const [newCategoryForm, setNewCategoryForm] = useState({ label: "", type: "expense" });
+  const [managingBizCategories, setManagingBizCategories] = useState(false);
+  const [newBizCategoryForm, setNewBizCategoryForm] = useState({ label: "", type: "expense" });
+  const [editingBizMonth, setEditingBizMonth] = useState(null);
+  const [editingBizMonthDraft, setEditingBizMonthDraft] = useState(null);
+  const [businessCategories, setBusinessCategories] = useState(() => loadState(STORAGE_KEYS.businessCategories, [
+    { id: "carryover",       label: "Carryover",  type: "income"  },
+    { id: "consulting",      label: "Consulting", type: "income"  },
+    { id: "sunderMed",       label: "SunderMed",  type: "income"  },
+    { id: "miscTransfer",    label: "Misc",        type: "income"  },
+    { id: "salary",          label: "Salary",     type: "expense" },
+    { id: "tax",             label: "Tax",        type: "expense" },
+    { id: "healthInsurance", label: "Health",     type: "expense" },
+    { id: "autoLoan",        label: "Auto Loan",  type: "expense" },
+    { id: "autoInsurance",   label: "Auto Ins",   type: "expense" },
+    { id: "utilities",       label: "Utilities",  type: "expense" },
+    { id: "chase",           label: "Chase",      type: "expense" },
+    { id: "misc",            label: "Misc",       type: "expense" },
+    { id: "capitalOne",      label: "Cap One",    type: "expense" },
+  ]));
+  const [businessMonthly, setBusinessMonthly] = useState(() => loadState(STORAGE_KEYS.businessMonthly, initialMonthlyBusinessData));
   const [personalCategories, setPersonalCategories] = useState(() => loadState(STORAGE_KEYS.personalCategories, [
     { id: "carryover",    label: "Carryover",  type: "income"  },
     { id: "income",       label: "Income",     type: "income"  },
@@ -374,6 +412,8 @@ export default function BudgetDashboard() {
   useEffect(() => { saveState(STORAGE_KEYS.budget, budget); }, [budget]);
   useEffect(() => { saveState(STORAGE_KEYS.businessBudget, businessBudget); }, [businessBudget]);
   useEffect(() => { saveState(STORAGE_KEYS.personalCategories, personalCategories); }, [personalCategories]);
+  useEffect(() => { saveState(STORAGE_KEYS.businessCategories, businessCategories); }, [businessCategories]);
+  useEffect(() => { saveState(STORAGE_KEYS.businessMonthly, businessMonthly); }, [businessMonthly]);
 
   // ── Derived Data ─────────────────────────────────────────
   const totalDebt = useMemo(() =>
@@ -406,7 +446,6 @@ export default function BudgetDashboard() {
   const netWorthPie = useMemo(() =>
     netWorthItems.filter(i => i.value > 0).map(i => ({ ...i })), []);
 
-  const MONTH_MAP = { Jan:"January", Feb:"February", Mar:"March", Apr:"April", May:"May", Jun:"June", Jul:"July", Aug:"August", Sep:"September", Oct:"October", Nov:"November", Dec:"December" };
   const MONTH_ORDER = monthNames;
   const CURRENT_MONTH_IDX = 2; // March 2026
   const monthlyBudget = budget;
@@ -425,36 +464,7 @@ export default function BudgetDashboard() {
     return overviewData.reduce((s, r) => s + expCats.reduce((se, c) => se + (r[c.id] || 0), 0), 0);
   }, [overviewData, personalCategories]);
 
-  const monthlyBusinessBudget = useMemo(() => {
-    const groups = [];
-    const seen = {};
-    businessBudget.forEach(row => {
-      const abbr = row.period.split(" ")[0];
-      const name = MONTH_MAP[abbr] || abbr;
-      if (!seen[name]) { seen[name] = true; groups.push({ name, rows: [] }); }
-      groups[groups.length - 1].rows.push(row);
-    });
-    return groups.map(({ name, rows }) => {
-      const carryover       = rows[0].carryover;
-      const consulting      = rows.reduce((s, r) => s + r.consulting, 0);
-      const sunderMed       = rows.reduce((s, r) => s + r.sunderMed, 0);
-      const miscTransfer    = rows.reduce((s, r) => s + r.miscTransfer, 0);
-      const salary          = rows.reduce((s, r) => s + r.salary, 0);
-      const tax             = rows.reduce((s, r) => s + r.tax, 0);
-      const healthInsurance = rows.reduce((s, r) => s + r.healthInsurance, 0);
-      const autoLoan        = rows.reduce((s, r) => s + r.autoLoan, 0);
-      const autoInsurance   = rows.reduce((s, r) => s + r.autoInsurance, 0);
-      const utilities       = rows.reduce((s, r) => s + r.utilities, 0);
-      const chase           = rows.reduce((s, r) => s + r.chase, 0);
-      const misc            = rows.reduce((s, r) => s + r.misc, 0);
-      const capitalOne      = rows.reduce((s, r) => s + r.capitalOne, 0);
-      const totalIncome     = carryover + consulting + sunderMed + miscTransfer;
-      const totalExpense    = salary + tax + healthInsurance + autoLoan + autoInsurance + utilities + chase + misc + capitalOne;
-      return { period: name, carryover, consulting, sunderMed, miscTransfer, totalIncome,
-               salary, tax, healthInsurance, autoLoan, autoInsurance, utilities, chase, misc, capitalOne,
-               totalExpense, balance: totalIncome - totalExpense };
-    });
-  }, [businessBudget]);
+  // businessMonthly is now the editable monthly state (replaces derived monthlyBusinessBudget)
 
   // ── Handlers ─────────────────────────────────────────────
   const updateAccount = useCallback((updated) => {
@@ -720,67 +730,79 @@ export default function BudgetDashboard() {
       {/* ════ BUSINESS TAB ════ */}
       {tab === "business" && (
         <Card>
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <CardTitle>Business Budget — 2026 (Monthly)</CardTitle>
+            <Btn variant="primary" onClick={() => setManagingBizCategories(true)}>Manage Categories</Btn>
           </div>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 1100 }}>
+          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: Math.max(900, 300 + businessCategories.length * 100) }}>
               <thead>
                 <tr>
-                  {["Period","Carryover","Consulting","SunderMed","Misc","Total In","Salary","Tax","Health","Auto Loan","Auto Ins","Utilities","Chase","Misc","Cap One","Total Exp","Balance"].map((h, hi) => (
+                  {["Period", ...businessCategories.map(c => c.label), "Total In", "Total Exp", "Balance", ""].map((h, hi, arr) => (
                     <th key={`${h}-${hi}`} style={{
-                      textAlign: h === "Period" ? "left" : "right", padding: "8px 12px",
-                      background: "rgba(212,201,176,0.3)", color: "#a89070", fontWeight: 500,
-                      fontSize: "0.58rem", whiteSpace: "nowrap",
+                      textAlign: h === "Period" || h === "" ? "left" : "right",
+                      padding: "8px 12px", background: "rgba(212,201,176,0.3)",
+                      color: "#a89070", fontWeight: 500, fontSize: "0.58rem", whiteSpace: "nowrap",
                       textTransform: "uppercase", letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif",
-                      borderRadius: hi === 0 ? "6px 0 0 6px" : hi === 16 ? "0 6px 6px 0" : 0,
+                      borderRadius: hi === 0 ? "6px 0 0 6px" : hi === arr.length - 1 ? "0 6px 6px 0" : 0,
                     }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {monthlyBusinessBudget.map((row, i) => (
+                {businessMonthly.map((row, i) => (
                   <tr key={i} style={{ borderBottom: "0.5px solid #e0d8ca" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(212,201,176,0.12)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                     <td style={{ padding: "10px 12px", color: "#3d2e1e", fontWeight: 500 }}>{row.period}</td>
-                    {[row.carryover, row.consulting, row.sunderMed, row.miscTransfer, row.totalIncome,
-                      row.salary, row.tax, row.healthInsurance, row.autoLoan, row.autoInsurance,
-                      row.utilities, row.chase, row.misc, row.capitalOne, row.totalExpense, row.balance].map((val, j) => (
-                      <td key={j} style={{
-                        textAlign: "right", padding: "10px 12px",
-                        color: j === 4 ? "#2d4a35" : j === 14 ? "#A63D3D" : j === 15 ? (val < 0 ? "#A63D3D" : "#2d4a35") : "#7a6045",
-                        fontWeight: [4, 14, 15].includes(j) ? 500 : 400,
-                        fontFamily: "'Jost', sans-serif", fontSize: 11,
-                      }}>
-                        {val === 0 ? "—" : fmtFull(val)}
-                      </td>
-                    ))}
+                    {businessCategories.map(cat => {
+                      const val = row[cat.id] || 0;
+                      return (
+                        <td key={cat.id} style={{ textAlign: "right", padding: "10px 12px", color: "#7a6045", fontFamily: "'Jost', sans-serif", fontSize: 11 }}>
+                          {val === 0 ? "—" : fmtFull(val)}
+                        </td>
+                      );
+                    })}
+                    {(() => {
+                      const totalIn = businessCategories.filter(c => c.type === "income").reduce((s, c) => s + (row[c.id] || 0), 0);
+                      const totalExp = businessCategories.filter(c => c.type === "expense").reduce((s, c) => s + (row[c.id] || 0), 0);
+                      const bal = totalIn - totalExp;
+                      return (<>
+                        <td style={{ textAlign: "right", padding: "10px 12px", color: "#2d4a35", fontWeight: 500, fontFamily: "'Jost', sans-serif", fontSize: 11 }}>{totalIn === 0 ? "—" : fmtFull(totalIn)}</td>
+                        <td style={{ textAlign: "right", padding: "10px 12px", color: "#A63D3D", fontWeight: 500, fontFamily: "'Jost', sans-serif", fontSize: 11 }}>{totalExp === 0 ? "—" : fmtFull(totalExp)}</td>
+                        <td style={{ textAlign: "right", padding: "10px 12px", color: bal < 0 ? "#A63D3D" : "#2d4a35", fontWeight: 500, fontFamily: "'Jost', sans-serif", fontSize: 11 }}>{fmtFull(bal)}</td>
+                      </>);
+                    })()}
+                    <td style={{ padding: "10px 12px" }}>
+                      <button onClick={() => { setEditingBizMonthDraft({ ...row }); setEditingBizMonth(row.period); }} style={{
+                        padding: "4px 12px", borderRadius: 100, border: "none", cursor: "pointer",
+                        background: "#eaf2ec", color: "#2d4a35", fontSize: "0.65rem",
+                        fontFamily: "'Jost', sans-serif", fontWeight: 500, letterSpacing: "0.06em",
+                      }}>Edit</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr style={{ borderTop: "1.5px solid #c8bba5" }}>
                   <td style={{ padding: "10px 12px", fontWeight: 600, color: "#3d2e1e", fontFamily: "'Syne', sans-serif", fontSize: "0.6rem", letterSpacing: "0.08em", textTransform: "uppercase" }}>Totals</td>
-                  {(() => {
-                    const s = monthlyBusinessBudget.reduce((acc, r) => ({
-                      carryover: acc.carryover + r.carryover, consulting: acc.consulting + r.consulting,
-                      sunderMed: acc.sunderMed + r.sunderMed, miscTransfer: acc.miscTransfer + r.miscTransfer,
-                      totalIncome: acc.totalIncome + r.totalIncome, salary: acc.salary + r.salary,
-                      tax: acc.tax + r.tax, healthInsurance: acc.healthInsurance + r.healthInsurance,
-                      autoLoan: acc.autoLoan + r.autoLoan, autoInsurance: acc.autoInsurance + r.autoInsurance,
-                      utilities: acc.utilities + r.utilities, chase: acc.chase + r.chase,
-                      misc: acc.misc + r.misc, capitalOne: acc.capitalOne + r.capitalOne,
-                      totalExpense: acc.totalExpense + r.totalExpense, balance: acc.balance + r.balance,
-                    }), { carryover:0, consulting:0, sunderMed:0, miscTransfer:0, totalIncome:0, salary:0, tax:0, healthInsurance:0, autoLoan:0, autoInsurance:0, utilities:0, chase:0, misc:0, capitalOne:0, totalExpense:0, balance:0 });
-                    return [s.carryover, s.consulting, s.sunderMed, s.miscTransfer, s.totalIncome,
-                            s.salary, s.tax, s.healthInsurance, s.autoLoan, s.autoInsurance,
-                            s.utilities, s.chase, s.misc, s.capitalOne, s.totalExpense, s.balance].map((v, j) => (
-                      <td key={j} style={{
-                        textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11,
-                        color: j === 4 ? "#2d4a35" : j === 14 ? "#A63D3D" : "#3d2e1e",
-                        fontFamily: "'Jost', sans-serif",
-                      }}>{fmtFull(v)}</td>
-                    ));
-                  })()}
+                  {businessCategories.map(cat => (
+                    <td key={cat.id} style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#3d2e1e", fontFamily: "'Jost', sans-serif" }}>
+                      {fmtFull(businessMonthly.reduce((s, r) => s + (r[cat.id] || 0), 0))}
+                    </td>
+                  ))}
+                  <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#2d4a35", fontFamily: "'Jost', sans-serif" }}>
+                    {fmtFull(businessMonthly.reduce((s, r) => s + businessCategories.filter(c => c.type === "income").reduce((si, c) => si + (r[c.id] || 0), 0), 0))}
+                  </td>
+                  <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#A63D3D", fontFamily: "'Jost', sans-serif" }}>
+                    {fmtFull(businessMonthly.reduce((s, r) => s + businessCategories.filter(c => c.type === "expense").reduce((se, c) => se + (r[c.id] || 0), 0), 0))}
+                  </td>
+                  <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#3d2e1e", fontFamily: "'Jost', sans-serif" }}>
+                    {fmtFull(businessMonthly.reduce((s, r) => {
+                      const ti = businessCategories.filter(c => c.type === "income").reduce((si, c) => si + (r[c.id] || 0), 0);
+                      const te = businessCategories.filter(c => c.type === "expense").reduce((se, c) => se + (r[c.id] || 0), 0);
+                      return s + (ti - te);
+                    }, 0))}
+                  </td>
+                  <td></td>
                 </tr>
               </tfoot>
             </table>
@@ -1058,6 +1080,95 @@ export default function BudgetDashboard() {
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>
             <Btn variant="secondary" onClick={() => setManagingCategories(false)}>Done</Btn>
+          </div>
+        </Modal>
+      )}
+
+      {editingBizMonth && editingBizMonthDraft && (
+        <Modal title={editingBizMonth} onClose={() => { setEditingBizMonth(null); setEditingBizMonthDraft(null); }}>
+          {businessCategories.filter(c => c.type === "income").length > 0 && (
+            <div style={{ fontSize: "0.58rem", color: "#a89070", marginBottom: 8, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Income</div>
+          )}
+          {businessCategories.filter(c => c.type === "income").map(cat => (
+            <Input key={cat.id} label={cat.label}
+              value={editingBizMonthDraft[cat.id] || 0}
+              onChange={v => setEditingBizMonthDraft(p => ({ ...p, [cat.id]: v }))}
+            />
+          ))}
+          {businessCategories.filter(c => c.type === "expense").length > 0 && (
+            <div style={{ fontSize: "0.58rem", color: "#a89070", margin: "16px 0 10px", textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Expenses</div>
+          )}
+          {businessCategories.filter(c => c.type === "expense").map(cat => (
+            <Input key={cat.id} label={cat.label}
+              value={editingBizMonthDraft[cat.id] || 0}
+              onChange={v => setEditingBizMonthDraft(p => ({ ...p, [cat.id]: v }))}
+            />
+          ))}
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 16 }}>
+            <Btn variant="secondary" onClick={() => { setEditingBizMonth(null); setEditingBizMonthDraft(null); }}>Cancel</Btn>
+            <Btn onClick={() => {
+              const d = editingBizMonthDraft;
+              setBusinessMonthly(prev => prev.map(r => r.period === d.period ? { ...d } : r));
+              setEditingBizMonth(null);
+              setEditingBizMonthDraft(null);
+            }}>Save</Btn>
+          </div>
+        </Modal>
+      )}
+
+      {managingBizCategories && (
+        <Modal title="Manage Business Categories" onClose={() => setManagingBizCategories(false)}>
+          <div style={{ marginBottom: 4 }}>
+            {businessCategories.length === 0 && (
+              <div style={{ color: "#a89070", fontSize: 12, padding: "8px 0" }}>No categories yet.</div>
+            )}
+            {businessCategories.map((cat, idx) => (
+              <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "0.5px solid #e0d8ca" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <button disabled={idx === 0} onClick={() => setBusinessCategories(prev => {
+                    const a = [...prev]; [a[idx - 1], a[idx]] = [a[idx], a[idx - 1]]; return a;
+                  })} style={{ background: "none", border: "none", cursor: idx === 0 ? "default" : "pointer", color: idx === 0 ? "#d4c9b0" : "#a89070", fontSize: 10, lineHeight: 1, padding: "1px 3px" }}>▲</button>
+                  <button disabled={idx === businessCategories.length - 1} onClick={() => setBusinessCategories(prev => {
+                    const a = [...prev]; [a[idx], a[idx + 1]] = [a[idx + 1], a[idx]]; return a;
+                  })} style={{ background: "none", border: "none", cursor: idx === businessCategories.length - 1 ? "default" : "pointer", color: idx === businessCategories.length - 1 ? "#d4c9b0" : "#a89070", fontSize: 10, lineHeight: 1, padding: "1px 3px" }}>▼</button>
+                </div>
+                <input
+                  value={cat.label}
+                  onChange={e => setBusinessCategories(prev => prev.map((c, i) => i === idx ? { ...c, label: e.target.value } : c))}
+                  style={{ flex: 1, padding: "5px 8px", background: "#f5f1e8", border: "1px solid #c8bba5", borderRadius: 6, fontSize: 13, color: "#3d2e1e", fontFamily: "'Jost', sans-serif", outline: "none" }}
+                />
+                <span style={{ fontSize: "0.58rem", color: cat.type === "income" ? "#2d4a35" : "#a89070", fontFamily: "'Syne', sans-serif", textTransform: "uppercase", letterSpacing: "0.08em", minWidth: 52 }}>{cat.type}</span>
+                <button onClick={() => setBusinessCategories(prev => prev.filter((_, i) => i !== idx))} style={{
+                  background: "none", border: "none", color: "#A63D3D", cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "0 2px",
+                }}>×</button>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 20, paddingTop: 14, borderTop: "1px solid #e0d8ca" }}>
+            <div style={{ fontSize: "0.58rem", color: "#a89070", marginBottom: 10, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif" }}>Add Category</div>
+            <Input label="Label" type="text" value={newBizCategoryForm.label} onChange={v => setNewBizCategoryForm(p => ({ ...p, label: v }))} />
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "block", fontSize: "0.58rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "#a89070", marginBottom: 5, fontFamily: "'Syne', sans-serif" }}>Type</label>
+              <select value={newBizCategoryForm.type} onChange={e => setNewBizCategoryForm(p => ({ ...p, type: e.target.value }))} style={{
+                width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid #c8bba5",
+                background: "#f5f1e8", color: "#3d2e1e", fontSize: 13, fontFamily: "'Jost', sans-serif",
+              }}>
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+              </select>
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <Btn onClick={() => {
+                const label = newBizCategoryForm.label.trim();
+                if (!label) return;
+                const id = label.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+                setBusinessCategories(prev => [...prev, { id, label, type: newBizCategoryForm.type }]);
+                setNewBizCategoryForm({ label: "", type: "expense" });
+              }}>Add</Btn>
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>
+            <Btn variant="secondary" onClick={() => setManagingBizCategories(false)}>Done</Btn>
           </div>
         </Modal>
       )}
