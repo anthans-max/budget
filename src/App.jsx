@@ -397,7 +397,7 @@ export default function BudgetDashboard() {
     if (overviewRange === "month") return monthlyBudget.filter(r => r.period === overviewMonth);
     return monthlyBudget;
   }, [overviewRange, overviewMonth, monthlyBudget]);
-  const overviewIncome = useMemo(() => overviewData.reduce((s, r) => s + r.income, 0), [overviewData]);
+  const overviewIncome = useMemo(() => overviewData.reduce((s, r) => s + r.totalIncome, 0), [overviewData]);
   const overviewExpenses = useMemo(() => overviewData.reduce((s, r) => s + r.totalExpense, 0), [overviewData]);
 
   const monthlyBusinessBudget = useMemo(() => {
