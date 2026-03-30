@@ -397,7 +397,7 @@ export default function BudgetDashboard() {
     if (overviewRange === "month") return monthlyBudget.filter(r => r.period === overviewMonth);
     return monthlyBudget;
   }, [overviewRange, overviewMonth, monthlyBudget]);
-  const overviewIncome = useMemo(() => overviewData.reduce((s, r) => s + r.income + r.misc, 0), [overviewData]);
+  const overviewIncome = useMemo(() => overviewData.reduce((s, r) => s + r.income, 0), [overviewData]);
   const overviewExpenses = useMemo(() => overviewData.reduce((s, r) => s + r.totalExpense, 0), [overviewData]);
 
   const monthlyBusinessBudget = useMemo(() => {
@@ -960,37 +960,7 @@ export default function BudgetDashboard() {
           display: "flex", alignItems: "center", gap: 10,
           textDecoration: "none",
         }}>
-          {/* Lotus flower SVG — gradient pink petals / teal base */}
-          <svg width="22" height="22" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="petalL" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#f7a8a8"/>
-                <stop offset="100%" stopColor="#e07090"/>
-              </linearGradient>
-              <linearGradient id="petalC" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#f9c4c4"/>
-                <stop offset="100%" stopColor="#e8809a"/>
-              </linearGradient>
-              <linearGradient id="petalR" x1="1" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#f7a8a8"/>
-                <stop offset="100%" stopColor="#e07090"/>
-              </linearGradient>
-              <linearGradient id="leaf" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#5ab8a8"/>
-                <stop offset="100%" stopColor="#2d7a6a"/>
-              </linearGradient>
-            </defs>
-            {/* Left petal */}
-            <path d="M18 22 C12 18 10 10 14 6 C15 12 16 18 18 22Z" fill="url(#petalL)"/>
-            {/* Right petal */}
-            <path d="M18 22 C24 18 26 10 22 6 C21 12 20 18 18 22Z" fill="url(#petalR)"/>
-            {/* Center petal */}
-            <path d="M18 22 C14 16 14 8 18 4 C22 8 22 16 18 22Z" fill="url(#petalC)"/>
-            {/* Left leaf */}
-            <path d="M18 26 C14 24 8 26 7 30 C11 28 15 27 18 26Z" fill="url(#leaf)"/>
-            {/* Right leaf */}
-            <path d="M18 26 C22 24 28 26 29 30 C25 28 21 27 18 26Z" fill="url(#leaf)"/>
-          </svg>
+          <img src="/lotus-logo.png" alt="Lotus AI" style={{ width: 28, height: 28, objectFit: "contain" }} />
           <span style={{
             fontFamily: "'Syne', sans-serif", fontSize: "0.58rem", fontWeight: 500,
             letterSpacing: "0.28em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)",
