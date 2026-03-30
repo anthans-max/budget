@@ -779,7 +779,7 @@ export default function BudgetDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {accounts.map((a) => {
+                {[...accounts].sort((a, b) => a.type.localeCompare(b.type)).map((a) => {
                   const badgeStyle = (() => {
                     if (a.type === "Credit Card") return { bg: "rgba(166,61,61,0.09)", color: "#A63D3D", border: "1px solid rgba(166,61,61,0.15)" };
                     if (a.type === "Investment")  return { bg: "#eaf0f4", color: "#3a4a5a", border: "1px solid rgba(58,74,90,0.15)" };
