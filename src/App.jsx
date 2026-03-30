@@ -1008,14 +1008,28 @@ export default function BudgetDashboard() {
             {personalCategories.length === 0 && (
               <div style={{ color: "#a89070", fontSize: 12, padding: "8px 0" }}>No categories yet.</div>
             )}
-            {personalCategories.map(cat => (
-              <div key={cat.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 0", borderBottom: "0.5px solid #e0d8ca" }}>
-                <div>
-                  <span style={{ fontSize: 13, color: "#3d2e1e", fontFamily: "'Jost', sans-serif" }}>{cat.label}</span>
-                  <span style={{ marginLeft: 8, fontSize: "0.58rem", color: "#a89070", fontFamily: "'Syne', sans-serif", textTransform: "uppercase", letterSpacing: "0.08em" }}>{cat.type}</span>
+            {personalCategories.map((cat, idx) => (
+              <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "0.5px solid #e0d8ca" }}>
+                {/* Up / Down */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <button disabled={idx === 0} onClick={() => setPersonalCategories(prev => {
+                    const a = [...prev]; [a[idx - 1], a[idx]] = [a[idx], a[idx - 1]]; return a;
+                  })} style={{ background: "none", border: "none", cursor: idx === 0 ? "default" : "pointer", color: idx === 0 ? "#d4c9b0" : "#a89070", fontSize: 10, lineHeight: 1, padding: "1px 3px" }}>▲</button>
+                  <button disabled={idx === personalCategories.length - 1} onClick={() => setPersonalCategories(prev => {
+                    const a = [...prev]; [a[idx], a[idx + 1]] = [a[idx + 1], a[idx]]; return a;
+                  })} style={{ background: "none", border: "none", cursor: idx === personalCategories.length - 1 ? "default" : "pointer", color: idx === personalCategories.length - 1 ? "#d4c9b0" : "#a89070", fontSize: 10, lineHeight: 1, padding: "1px 3px" }}>▼</button>
                 </div>
-                <button onClick={() => setPersonalCategories(prev => prev.filter(c => c.id !== cat.id))} style={{
-                  background: "none", border: "none", color: "#A63D3D", cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "0 4px",
+                {/* Inline rename input */}
+                <input
+                  value={cat.label}
+                  onChange={e => setPersonalCategories(prev => prev.map((c, i) => i === idx ? { ...c, label: e.target.value } : c))}
+                  style={{ flex: 1, padding: "5px 8px", background: "#f5f1e8", border: "1px solid #c8bba5", borderRadius: 6, fontSize: 13, color: "#3d2e1e", fontFamily: "'Jost', sans-serif", outline: "none" }}
+                />
+                {/* Type badge */}
+                <span style={{ fontSize: "0.58rem", color: cat.type === "income" ? "#2d4a35" : "#a89070", fontFamily: "'Syne', sans-serif", textTransform: "uppercase", letterSpacing: "0.08em", minWidth: 52 }}>{cat.type}</span>
+                {/* Remove */}
+                <button onClick={() => setPersonalCategories(prev => prev.filter((_, i) => i !== idx))} style={{
+                  background: "none", border: "none", color: "#A63D3D", cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "0 2px",
                 }}>×</button>
               </div>
             ))}
