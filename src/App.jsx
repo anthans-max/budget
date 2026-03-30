@@ -98,47 +98,49 @@ const fmtFull = (n) => {
   return (neg ? "-" : "") + "$" + Math.round(Math.abs(n)).toLocaleString("en-US");
 };
 const COLORS = {
-  bg:         "#F4F1EC",
-  bg2:        "#EDE9E1",
-  card:       "#EDE9E1",
-  cardAlt:    "#E8E3DB",
-  border:     "rgba(44,40,32,0.12)",
-  borderStr:  "rgba(44,40,32,0.20)",
-  text:       "#2C2820",
-  textDim:    "#5A544C",
-  textMuted:  "#A09890",
-  textHint:   "#C4BDB5",
-  accent:     "#B5871A",
-  accentS:    "rgba(181,135,26,0.10)",
-  accentB:    "rgba(181,135,26,0.22)",
-  green:      "#4A7C6F",
-  greenS:     "rgba(74,124,111,0.12)",
-  red:        "#A63D3D",
-  redS:       "rgba(166,61,61,0.10)",
-  navBg:      "#2C2820",
-  navText:    "#F4F1EC",
-  navMuted:   "rgba(244,241,236,0.50)",
+  bg:          "#faf7f2",
+  card:        "#f5f1e8",
+  border:      "#e0d8ca",
+  borderDark:  "#c8bba5",
+  text:        "#3d2e1e",
+  textDim:     "#7a6045",
+  textMuted:   "#a89070",
+  accent:      "#b5703a",
+  accentLight: "#d4944e",
+  accentPale:  "#faf0e6",
+  green:       "#2d4a35",
+  greenMid:    "#3d6348",
+  greenLight:  "#5a8a68",
+  greenPale:   "#eaf2ec",
+  red:         "#A63D3D",
+  redPale:     "rgba(166,61,61,0.09)",
+  slate:       "#3a4a5a",
+  slatePale:   "#eaf0f4",
+  tan:         "#d4c9b0",
+  footerBg:    "#1a1a18",
 };
-const PIE_COLORS = ["#4A7C6F","#7B9BA8","#B5871A","#7B6FAA","#8A8278","#A63D3D","#6B8F71"];
+const PIE_COLORS = ["#2d4a35","#b5703a","#3a4a5a","#7a6045","#5a8a68","#A63D3D","#d4944e"];
 
 const Card = ({ children, style = {} }) => (
   <div style={{
-    background: "#EDE9E1",
+    background: "#f5f1e8",
+    border: "1px solid #e0d8ca",
     borderRadius: 10,
-    border: "0.5px solid rgba(44,40,32,0.12)",
-    padding: 20,
+    padding: "22px 24px",
+    marginBottom: 20,
     ...style
   }}>{children}</div>
 );
 
 const CardTitle = ({ children }) => (
   <h3 style={{
-    margin: "0 0 16px",
-    fontSize: 12,
-    color: "#2C2820",
+    margin: "0 0 18px",
+    fontSize: "0.65rem",
+    color: "#a89070",
     fontWeight: 500,
-    fontFamily: "'Jost', sans-serif",
-    letterSpacing: "0.02em",
+    fontFamily: "'Syne', sans-serif",
+    letterSpacing: "0.18em",
+    textTransform: "uppercase",
   }}>{children}</h3>
 );
 
@@ -146,15 +148,15 @@ const ChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{
-      background: "#F4F1EC", border: "0.5px solid rgba(44,40,32,0.15)", borderRadius: 8,
-      padding: "10px 14px", fontSize: 12, color: "#2C2820",
+      background: "#faf7f2", border: "1px solid #e0d8ca", borderRadius: 8,
+      padding: "10px 14px", fontSize: 11, color: "#3d2e1e",
       fontFamily: "'Jost', sans-serif",
     }}>
       <div style={{ fontWeight: 500, marginBottom: 6 }}>{label}</div>
       {payload.map((p, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
           <span style={{ width: 7, height: 7, borderRadius: "50%", background: p.color, display: "inline-block" }} />
-          <span style={{ color: "#A09890" }}>{p.name}:</span>
+          <span style={{ color: "#a89070" }}>{p.name}:</span>
           <span style={{ fontWeight: 500 }}>{fmtFull(p.value)}</span>
         </div>
       ))}
@@ -167,13 +169,14 @@ const TabBtn = ({ active, onClick, children }) => (
   <button onClick={onClick} style={{
     background: "transparent",
     border: "none",
-    borderBottom: active ? "2px solid #B5871A" : "2px solid transparent",
-    color: active ? "#B5871A" : "rgba(244,241,236,0.50)",
+    borderBottom: active ? "2px solid #b5703a" : "2px solid transparent",
+    color: active ? "#b5703a" : "#a89070",
     padding: "6px 14px",
-    fontSize: 12,
-    fontWeight: 400,
-    fontFamily: "'Jost', sans-serif",
-    letterSpacing: "0.03em",
+    fontSize: "0.62rem",
+    fontWeight: 500,
+    fontFamily: "'Syne', sans-serif",
+    letterSpacing: "0.12em",
+    textTransform: "uppercase",
     cursor: "pointer",
     transition: "all 0.15s",
   }}>{children}</button>
@@ -182,34 +185,35 @@ const TabBtn = ({ active, onClick, children }) => (
 // ── KPI Card ─────────────────────────────────────────────────
 const KPI = ({ title, value, subtitle, color, negative = false }) => (
   <div style={{
-    background: "#EDE9E1",
-    border: "0.5px solid rgba(44,40,32,0.12)",
+    background: "#f5f1e8",
+    border: "1px solid #e0d8ca",
     borderRadius: 10,
-    padding: "14px 16px",
+    padding: "16px 18px",
     flex: 1,
+    minWidth: 160,
   }}>
     <div style={{
-      fontSize: 9,
+      fontSize: "0.6rem",
       fontWeight: 500,
-      letterSpacing: "0.12em",
+      letterSpacing: "0.16em",
       textTransform: "uppercase",
-      color: "#A09890",
-      marginBottom: 6,
-      fontFamily: "'Jost', sans-serif",
+      color: "#a89070",
+      marginBottom: 8,
+      fontFamily: "'Syne', sans-serif",
     }}>{title}</div>
     <div style={{
-      fontFamily: "'Playfair Display', serif",
-      fontWeight: 400,
-      fontSize: 22,
-      color: color || (negative ? "#A63D3D" : "#2C2820"),
+      fontFamily: "'Cormorant Garamond', serif",
+      fontWeight: 600,
+      fontSize: "1.6rem",
+      color: color || (negative ? "#A63D3D" : "#3d2e1e"),
       lineHeight: 1,
       marginBottom: 5,
     }}>{value}</div>
     {subtitle && (
       <div style={{
-        fontSize: 10,
+        fontSize: "0.68rem",
         fontWeight: 300,
-        color: "#A09890",
+        color: "#a89070",
         fontFamily: "'Jost', sans-serif",
       }}>{subtitle}</div>
     )}
@@ -219,17 +223,17 @@ const KPI = ({ title, value, subtitle, color, negative = false }) => (
 // ── Edit Modal ───────────────────────────────────────────────
 const Modal = ({ title, onClose, children }) => (
   <div style={{
-    position: "fixed", inset: 0, background: "rgba(44,40,32,0.45)", display: "flex",
+    position: "fixed", inset: 0, background: "rgba(61,46,30,0.45)", display: "flex",
     alignItems: "center", justifyContent: "center", zIndex: 1000
   }} onClick={onClose}>
     <div style={{
-      background: "#F4F1EC", borderRadius: 12, border: "0.5px solid rgba(44,40,32,0.15)",
+      background: "#faf7f2", borderRadius: 12, border: "1px solid #e0d8ca",
       padding: 28, minWidth: 380, maxWidth: 520, width: "90%", maxHeight: "80vh", overflowY: "auto"
     }} onClick={e => e.stopPropagation()}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h2 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 400, fontSize: 18, color: "#2C2820" }}>{title}</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+        <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 600, fontSize: "1.3rem", color: "#3d2e1e" }}>{title}</h2>
         <button onClick={onClose} style={{
-          background: "none", border: "none", fontSize: 18, color: "#A09890", cursor: "pointer"
+          background: "none", border: "none", fontSize: 18, color: "#a89070", cursor: "pointer"
         }}>✕</button>
       </div>
       {children}
@@ -238,18 +242,18 @@ const Modal = ({ title, onClose, children }) => (
 );
 
 const Input = ({ label, value, onChange, type = "number" }) => (
-  <div style={{ marginBottom: 12 }}>
+  <div style={{ marginBottom: 14 }}>
     <label style={{
-      display: "block", fontSize: 10, fontWeight: 500, letterSpacing: "0.08em",
-      textTransform: "uppercase", color: "#A09890", marginBottom: 5,
-      fontFamily: "'Jost', sans-serif",
+      display: "block", fontSize: "0.58rem", fontWeight: 500, letterSpacing: "0.12em",
+      textTransform: "uppercase", color: "#a89070", marginBottom: 5,
+      fontFamily: "'Syne', sans-serif",
     }}>{label}</label>
     <input
       type={type} value={value} onChange={e => onChange(type === "number" ? parseFloat(e.target.value) || 0 : e.target.value)}
       style={{
-        width: "100%", padding: "8px 10px", background: "#F4F1EC",
-        border: "0.5px solid rgba(44,40,32,0.20)", borderRadius: 6,
-        fontSize: 13, color: "#2C2820", fontFamily: "'Jost', sans-serif",
+        width: "100%", padding: "9px 12px", background: "#f5f1e8",
+        border: "1px solid #c8bba5", borderRadius: 6,
+        fontSize: 13, color: "#3d2e1e", fontFamily: "'Jost', sans-serif",
         outline: "none", boxSizing: "border-box",
       }}
     />
@@ -258,15 +262,18 @@ const Input = ({ label, value, onChange, type = "number" }) => (
 
 const Btn = ({ onClick, children, variant = "primary", style = {} }) => (
   <button onClick={onClick} style={{
-    background: variant === "primary" ? "#2C2820" : "rgba(44,40,32,0.08)",
-    color: variant === "primary" ? "#F4F1EC" : "#5A544C",
-    border: variant === "primary" ? "none" : "0.5px solid rgba(44,40,32,0.15)",
-    borderRadius: 5,
-    padding: "5px 12px",
-    fontSize: 11,
+    display: "inline-flex", alignItems: "center", gap: 6,
+    background: variant === "primary" ? "#2d4a35" : "transparent",
+    color: variant === "primary" ? "#faf7f2" : "#7a6045",
+    border: variant === "primary" ? "none" : "1px solid #c8bba5",
+    borderRadius: 100,
+    padding: variant === "primary" ? "8px 20px" : "7px 18px",
+    fontSize: "0.72rem",
     fontFamily: "'Jost', sans-serif",
-    fontWeight: 400,
+    fontWeight: 500,
+    letterSpacing: "0.08em",
     cursor: "pointer",
+    transition: "background 0.2s",
     ...style,
   }}>{children}</button>
 );
@@ -457,16 +464,30 @@ export default function BudgetDashboard() {
   // ═══════════════════════════════════════════════════════════
   return (
     <div style={{
-      minHeight: "100vh", background: "#F4F1EC",
-      color: "#2C2820", fontFamily: "'Jost', sans-serif",
+      minHeight: "100vh", background: "#faf7f2",
+      color: "#3d2e1e", fontFamily: "'Jost', sans-serif",
     }}>
       {/* Header */}
-      <div style={{ background: "#2C2820", padding: "18px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+      <div style={{
+        background: "#faf7f2", borderBottom: "1px solid #e0d8ca",
+        padding: "14px 28px", display: "flex", alignItems: "center",
+        justifyContent: "space-between", flexWrap: "wrap", gap: 12,
+        position: "sticky", top: 0, zIndex: 100,
+      }}>
         <div>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 400, fontSize: 20, color: "#F4F1EC", margin: 0 }}>Budget Manager</h1>
-          <p style={{ margin: "2px 0 0", fontSize: 11, fontWeight: 300, color: "rgba(244,241,236,0.50)", letterSpacing: "0.04em" }}>Personal finance dashboard — 2026</p>
+          <div style={{
+            fontFamily: "'Cormorant Garamond', serif", fontSize: "1.25rem",
+            fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase",
+            color: "#3d2e1e",
+          }}>
+            Lotus<em style={{ fontStyle: "italic", fontWeight: 400 }}>Ledger</em>
+          </div>
+          <div style={{
+            fontFamily: "'Syne', sans-serif", fontSize: "0.6rem",
+            letterSpacing: "0.15em", textTransform: "uppercase", color: "#a89070", marginTop: 2,
+          }}>Personal Finance · 2026</div>
         </div>
-        <div style={{ display: "flex", gap: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
           {[
             ["overview", "Overview"],
             ["budget", "Budget"],
@@ -478,27 +499,28 @@ export default function BudgetDashboard() {
           ))}
         </div>
       </div>
-      <div style={{ padding: "24px 28px" }}>
+      <div style={{ padding: "28px 28px 0" }}>
 
       {/* ════ OVERVIEW TAB ════ */}
       {tab === "overview" && (
         <>
           {/* Period selector */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
-            <div style={{ background: "rgba(44,40,32,0.07)", borderRadius: 8, padding: 3, display: "inline-flex", gap: 3 }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: 18, alignItems: "center", flexWrap: "wrap" }}>
+            <div style={{ background: "rgba(212,201,176,0.35)", borderRadius: 100, padding: 3, display: "inline-flex", gap: 2 }}>
               {[["ytd","YTD"],["month","Monthly"],["forecast","Full Year"]].map(([r,label]) => (
                 <button key={r} onClick={() => setOverviewRange(r)} style={{
-                  padding: "5px 14px", fontSize: 11, fontFamily: "'Jost', sans-serif",
-                  borderRadius: 5, border: "none", cursor: "pointer",
-                  background: overviewRange === r ? "#2C2820" : "transparent",
-                  color: overviewRange === r ? "#F4F1EC" : "#A09890",
+                  padding: "5px 16px", fontSize: "0.65rem", fontFamily: "'Syne', sans-serif",
+                  letterSpacing: "0.1em", textTransform: "uppercase",
+                  borderRadius: 100, border: "none", cursor: "pointer", transition: "all 0.15s",
+                  background: overviewRange === r ? "#2d4a35" : "transparent",
+                  color: overviewRange === r ? "#faf7f2" : "#a89070",
                 }}>{label}</button>
               ))}
             </div>
             {overviewRange === "month" && (
               <select value={overviewMonth} onChange={e => setOverviewMonth(e.target.value)} style={{
-                padding: "5px 10px", borderRadius: 6, border: "0.5px solid rgba(44,40,32,0.20)",
-                background: "#F4F1EC", color: "#2C2820", fontSize: 11,
+                padding: "6px 12px", borderRadius: 100, border: "1px solid #c8bba5",
+                background: "#faf7f2", color: "#3d2e1e", fontSize: "0.72rem",
                 fontFamily: "'Jost', sans-serif", cursor: "pointer",
               }}>
                 {MONTH_ORDER.map(m => <option key={m} value={m}>{m}</option>)}
@@ -524,21 +546,21 @@ export default function BudgetDashboard() {
                 <AreaChart data={overviewData}>
                   <defs>
                     <linearGradient id="incG" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#4A7C6F" stopOpacity={0.25} />
-                      <stop offset="100%" stopColor="#4A7C6F" stopOpacity={0.02} />
+                      <stop offset="0%" stopColor="#2d4a35" stopOpacity={0.22} />
+                      <stop offset="100%" stopColor="#2d4a35" stopOpacity={0.02} />
                     </linearGradient>
                     <linearGradient id="expG" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#A63D3D" stopOpacity={0.18} />
                       <stop offset="100%" stopColor="#A63D3D" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(44,40,32,0.08)" />
-                  <XAxis dataKey="period" tick={{ fill: "#A09890", fontSize: 10 }} axisLine={{ stroke: "rgba(44,40,32,0.08)" }} />
-                  <YAxis tickFormatter={fmt} tick={{ fill: "#A09890", fontSize: 10 }} axisLine={{ stroke: "rgba(44,40,32,0.08)" }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0d8ca" strokeWidth={0.5} />
+                  <XAxis dataKey="period" tick={{ fill: "#a89070", fontSize: 9, fontFamily: "Jost" }} axisLine={{ stroke: "#e0d8ca" }} tickLine={false} />
+                  <YAxis tickFormatter={fmt} tick={{ fill: "#a89070", fontSize: 9, fontFamily: "Jost" }} axisLine={{ stroke: "#e0d8ca" }} tickLine={false} />
                   <Tooltip content={<ChartTooltip />} />
-                  <Area type="monotone" dataKey="totalIncome" stroke="#4A7C6F" strokeWidth={2} fill="url(#incG)" name="Income" />
+                  <Area type="monotone" dataKey="totalIncome" stroke="#2d4a35" strokeWidth={2} fill="url(#incG)" name="Income" />
                   <Area type="monotone" dataKey="totalExpense" stroke="#A63D3D" strokeWidth={2} fill="url(#expG)" name="Expenses" />
-                  <Legend wrapperStyle={{ color: "#A09890", fontSize: 11, paddingTop: 8 }} />
+                  <Legend wrapperStyle={{ color: "#a89070", fontSize: 10, fontFamily: "Jost", paddingTop: 8 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </Card>
@@ -550,12 +572,12 @@ export default function BudgetDashboard() {
                   <Pie data={expenseBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={48} outerRadius={78} paddingAngle={3} strokeWidth={0}>
                     {expenseBreakdown.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={v => fmtFull(v)} contentStyle={{ background: "#F4F1EC", border: "0.5px solid rgba(44,40,32,0.15)", borderRadius: 8, color: "#2C2820" }} />
+                  <Tooltip formatter={v => fmtFull(v)} contentStyle={{ background: "#faf7f2", border: "1px solid #e0d8ca", borderRadius: 8, color: "#3d2e1e" }} />
                 </PieChart>
               </ResponsiveContainer>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px", justifyContent: "center" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 18px", justifyContent: "center", marginTop: 14 }}>
                 {expenseBreakdown.map((e, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: "#A09890" }}>
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "#a89070" }}>
                     <span style={{ width: 7, height: 7, borderRadius: "50%", background: PIE_COLORS[i % PIE_COLORS.length], display: "inline-block" }} />
                     {e.name}
                   </div>
@@ -568,11 +590,11 @@ export default function BudgetDashboard() {
             <CardTitle>Running Balance Over Time</CardTitle>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={budget}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(44,40,32,0.08)" />
-                <XAxis dataKey="period" tick={{ fill: "#A09890", fontSize: 10 }} axisLine={{ stroke: "rgba(44,40,32,0.08)" }} />
-                <YAxis tickFormatter={fmt} tick={{ fill: "#A09890", fontSize: 10 }} axisLine={{ stroke: "rgba(44,40,32,0.08)" }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0d8ca" strokeWidth={0.5} />
+                <XAxis dataKey="period" tick={{ fill: "#a89070", fontSize: 9, fontFamily: "Jost" }} axisLine={{ stroke: "#e0d8ca" }} tickLine={false} />
+                <YAxis tickFormatter={fmt} tick={{ fill: "#a89070", fontSize: 9, fontFamily: "Jost" }} axisLine={{ stroke: "#e0d8ca" }} tickLine={false} />
                 <Tooltip content={<ChartTooltip />} />
-                <Line type="monotone" dataKey="balance" stroke="#B5871A" strokeWidth={2} dot={{ r: 4, fill: "#B5871A", stroke: "#F4F1EC", strokeWidth: 2 }} name="Balance" />
+                <Line type="monotone" dataKey="balance" stroke="#b5703a" strokeWidth={2} dot={{ r: 4, fill: "#b5703a", stroke: "#faf7f2", strokeWidth: 2 }} name="Balance" />
               </LineChart>
             </ResponsiveContainer>
           </Card>
@@ -589,45 +611,45 @@ export default function BudgetDashboard() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 900 }}>
               <thead>
                 <tr>
-                  {["Period", "Carryover", "Income", "Misc", "Total In", "Mortgage", "Water", "Housekeep", "Pre-school", "Cash", "Chase", "Robinhood", "Total Exp", "Balance", ""].map(h => (
+                  {["Period", "Carryover", "Income", "Misc", "Total In", "Mortgage", "Water", "Housekeep", "Pre-school", "Cash", "Chase", "Robinhood", "Total Exp", "Balance", ""].map((h, hi) => (
                     <th key={h} style={{
                       textAlign: h === "Period" || h === "" ? "left" : "right",
-                      padding: "8px 12px", background: "#E4DFDA",
-                      color: "#A09890", fontWeight: 500, fontSize: 9, whiteSpace: "nowrap",
-                      textTransform: "uppercase", letterSpacing: "0.10em",
-                      fontFamily: "'Jost', sans-serif",
+                      padding: "8px 12px", background: "rgba(212,201,176,0.3)",
+                      color: "#a89070", fontWeight: 500, fontSize: "0.58rem", whiteSpace: "nowrap",
+                      textTransform: "uppercase", letterSpacing: "0.12em",
+                      fontFamily: "'Syne', sans-serif",
+                      borderRadius: hi === 0 ? "6px 0 0 6px" : hi === 14 ? "0 6px 6px 0" : 0,
                     }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {monthlyBudget.map((row, i) => (
-                  <tr key={i} style={{ background: i % 2 === 1 ? "rgba(44,40,32,0.025)" : "transparent" }}>
-                    <td style={{ padding: "9px 12px", color: "#2C2820", fontWeight: 500, borderBottom: "0.5px solid rgba(44,40,32,0.07)" }}>{row.period}</td>
+                  <tr key={i} style={{ borderBottom: "0.5px solid #e0d8ca" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(212,201,176,0.12)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                    <td style={{ padding: "10px 12px", color: "#3d2e1e", fontWeight: 500 }}>{row.period}</td>
                     {[row.carryover, row.income, row.misc, row.totalIncome, row.mortgage, row.water, row.housekeeping, row.preschool, row.cash, row.chase, row.robinhood, row.totalExpense, row.balance].map((val, j) => (
                       <td key={j} style={{
-                        textAlign: "right", padding: "9px 12px",
-                        borderBottom: "0.5px solid rgba(44,40,32,0.07)",
-                        color: j === 3 ? "#4A7C6F" : j === 11 ? "#A63D3D" : j === 12 ? (val < 0 ? "#A63D3D" : "#4A7C6F") : "#5A544C",
+                        textAlign: "right", padding: "10px 12px",
+                        color: j === 3 ? "#2d4a35" : j === 11 ? "#A63D3D" : j === 12 ? (val < 0 ? "#A63D3D" : "#2d4a35") : "#7a6045",
                         fontWeight: [3, 11, 12].includes(j) ? 500 : 400,
                         fontFamily: "'Jost', sans-serif", fontSize: 11,
                       }}>
                         {val === 0 ? "—" : fmtFull(val)}
                       </td>
                     ))}
-                    <td style={{ padding: "9px 12px", borderBottom: "0.5px solid rgba(44,40,32,0.07)" }}>
+                    <td style={{ padding: "10px 12px" }}>
                       <button onClick={() => setEditingMonth(row.period)} style={{
-                        padding: "3px 10px", borderRadius: 4, border: "none", cursor: "pointer",
-                        background: "rgba(44,40,32,0.08)", color: "#5A544C", fontSize: 10,
-                        fontFamily: "'Jost', sans-serif",
+                        padding: "4px 12px", borderRadius: 100, border: "none", cursor: "pointer",
+                        background: "#eaf2ec", color: "#2d4a35", fontSize: "0.65rem",
+                        fontFamily: "'Jost', sans-serif", fontWeight: 500, letterSpacing: "0.06em",
                       }}>Edit</button>
                     </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr style={{ borderTop: "1.5px solid rgba(44,40,32,0.20)" }}>
-                  <td style={{ padding: "9px 12px", fontWeight: 500, color: "#2C2820", fontFamily: "'Jost', sans-serif", fontSize: 11 }}>TOTALS</td>
+                <tr style={{ borderTop: "1.5px solid #c8bba5" }}>
+                  <td style={{ padding: "10px 12px", fontWeight: 600, color: "#3d2e1e", fontFamily: "'Syne', sans-serif", fontSize: "0.6rem", letterSpacing: "0.08em", textTransform: "uppercase" }}>Totals</td>
                   {(() => {
                     const sums = monthlyBudget.reduce((acc, r) => ({
                       carryover: acc.carryover + r.carryover, income: acc.income + r.income, misc: acc.misc + r.misc,
@@ -639,9 +661,9 @@ export default function BudgetDashboard() {
                     }), { carryover: 0, income: 0, misc: 0, totalIncome: 0, mortgage: 0, water: 0, housekeeping: 0, preschool: 0, cash: 0, chase: 0, robinhood: 0, totalExpense: 0, balance: 0 });
                     return [sums.carryover, sums.income, sums.misc, sums.totalIncome, sums.mortgage, sums.water, sums.housekeeping, sums.preschool, sums.cash, sums.chase, sums.robinhood, sums.totalExpense, sums.balance].map((v, j) => (
                       <td key={j} style={{
-                        textAlign: "right", padding: "9px 12px", fontWeight: 500,
-                        color: j === 3 ? "#4A7C6F" : j === 11 ? "#A63D3D" : "#2C2820",
-                        fontFamily: "'Jost', sans-serif", fontSize: 11,
+                        textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11,
+                        color: j === 3 ? "#2d4a35" : j === 11 ? "#A63D3D" : "#3d2e1e",
+                        fontFamily: "'Jost', sans-serif",
                       }}>{fmtFull(v)}</td>
                     ));
                   })()}
@@ -662,26 +684,27 @@ export default function BudgetDashboard() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 1100 }}>
               <thead>
                 <tr>
-                  {["Period","Carryover","Consulting","SunderMed","Misc","Total In","Salary","Tax","Health","Auto Loan","Auto Ins","Utilities","Chase","Misc","Cap One","Total Exp","Balance"].map(h => (
-                    <th key={h} style={{
+                  {["Period","Carryover","Consulting","SunderMed","Misc","Total In","Salary","Tax","Health","Auto Loan","Auto Ins","Utilities","Chase","Misc","Cap One","Total Exp","Balance"].map((h, hi) => (
+                    <th key={`${h}-${hi}`} style={{
                       textAlign: h === "Period" ? "left" : "right", padding: "8px 12px",
-                      background: "#E4DFDA", color: "#A09890", fontWeight: 500, fontSize: 9, whiteSpace: "nowrap",
-                      textTransform: "uppercase", letterSpacing: "0.10em", fontFamily: "'Jost', sans-serif",
+                      background: "rgba(212,201,176,0.3)", color: "#a89070", fontWeight: 500,
+                      fontSize: "0.58rem", whiteSpace: "nowrap",
+                      textTransform: "uppercase", letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif",
+                      borderRadius: hi === 0 ? "6px 0 0 6px" : hi === 16 ? "0 6px 6px 0" : 0,
                     }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {monthlyBusinessBudget.map((row, i) => (
-                  <tr key={i} style={{ background: i % 2 === 1 ? "rgba(44,40,32,0.025)" : "transparent" }}>
-                    <td style={{ padding: "9px 12px", color: "#2C2820", fontWeight: 500, borderBottom: "0.5px solid rgba(44,40,32,0.07)" }}>{row.period}</td>
+                  <tr key={i} style={{ borderBottom: "0.5px solid #e0d8ca" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(212,201,176,0.12)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                    <td style={{ padding: "10px 12px", color: "#3d2e1e", fontWeight: 500 }}>{row.period}</td>
                     {[row.carryover, row.consulting, row.sunderMed, row.miscTransfer, row.totalIncome,
                       row.salary, row.tax, row.healthInsurance, row.autoLoan, row.autoInsurance,
                       row.utilities, row.chase, row.misc, row.capitalOne, row.totalExpense, row.balance].map((val, j) => (
                       <td key={j} style={{
-                        textAlign: "right", padding: "9px 12px",
-                        borderBottom: "0.5px solid rgba(44,40,32,0.07)",
-                        color: j === 4 ? "#4A7C6F" : j === 14 ? "#A63D3D" : j === 15 ? (val < 0 ? "#A63D3D" : "#4A7C6F") : "#5A544C",
+                        textAlign: "right", padding: "10px 12px",
+                        color: j === 4 ? "#2d4a35" : j === 14 ? "#A63D3D" : j === 15 ? (val < 0 ? "#A63D3D" : "#2d4a35") : "#7a6045",
                         fontWeight: [4, 14, 15].includes(j) ? 500 : 400,
                         fontFamily: "'Jost', sans-serif", fontSize: 11,
                       }}>
@@ -692,8 +715,8 @@ export default function BudgetDashboard() {
                 ))}
               </tbody>
               <tfoot>
-                <tr style={{ borderTop: "1.5px solid rgba(44,40,32,0.20)" }}>
-                  <td style={{ padding: "9px 12px", fontWeight: 500, color: "#2C2820", fontFamily: "'Jost', sans-serif", fontSize: 11 }}>TOTALS</td>
+                <tr style={{ borderTop: "1.5px solid #c8bba5" }}>
+                  <td style={{ padding: "10px 12px", fontWeight: 600, color: "#3d2e1e", fontFamily: "'Syne', sans-serif", fontSize: "0.6rem", letterSpacing: "0.08em", textTransform: "uppercase" }}>Totals</td>
                   {(() => {
                     const s = monthlyBusinessBudget.reduce((acc, r) => ({
                       carryover: acc.carryover + r.carryover, consulting: acc.consulting + r.consulting,
@@ -709,9 +732,9 @@ export default function BudgetDashboard() {
                             s.salary, s.tax, s.healthInsurance, s.autoLoan, s.autoInsurance,
                             s.utilities, s.chase, s.misc, s.capitalOne, s.totalExpense, s.balance].map((v, j) => (
                       <td key={j} style={{
-                        textAlign: "right", padding: "9px 12px", fontWeight: 500,
-                        color: j === 4 ? "#4A7C6F" : j === 14 ? "#A63D3D" : "#2C2820",
-                        fontFamily: "'Jost', sans-serif", fontSize: 11,
+                        textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11,
+                        color: j === 4 ? "#2d4a35" : j === 14 ? "#A63D3D" : "#3d2e1e",
+                        fontFamily: "'Jost', sans-serif",
                       }}>{fmtFull(v)}</td>
                     ));
                   })()}
@@ -740,44 +763,55 @@ export default function BudgetDashboard() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
               <thead>
                 <tr>
-                  {["Account", "Type", "Balance", "Last Updated", "Actions"].map(h => (
+                  {["Account", "Type", "Balance", "Last Updated", "Actions"].map((h, hi) => (
                     <th key={h} style={{
                       textAlign: h === "Balance" ? "right" : "left", padding: "8px 12px",
-                      background: "#E4DFDA", color: "#A09890", fontWeight: 500, fontSize: 9,
-                      textTransform: "uppercase", letterSpacing: "0.10em", fontFamily: "'Jost', sans-serif",
+                      background: "rgba(212,201,176,0.3)", color: "#a89070", fontWeight: 500, fontSize: "0.58rem",
+                      textTransform: "uppercase", letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif",
+                      borderRadius: hi === 0 ? "6px 0 0 6px" : hi === 4 ? "0 6px 6px 0" : 0,
                     }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {accounts.map((a, i) => (
-                  <tr key={a.id} style={{ background: i % 2 === 1 ? "rgba(44,40,32,0.025)" : "transparent" }}>
-                    <td style={{ padding: "9px 12px", color: "#2C2820", fontWeight: 500, borderBottom: "0.5px solid rgba(44,40,32,0.07)" }}>{a.name}</td>
-                    <td style={{ padding: "9px 12px", borderBottom: "0.5px solid rgba(44,40,32,0.07)" }}>
-                      <span style={{
-                        padding: "2px 9px", borderRadius: 10, fontSize: 10,
-                        background: "rgba(44,40,32,0.08)", color: "#5A544C",
-                        border: "0.5px solid rgba(44,40,32,0.15)",
-                      }}>{a.type}</span>
-                    </td>
-                    <td style={{ padding: "9px 12px", textAlign: "right", fontFamily: "'Jost', sans-serif", fontWeight: 500, fontSize: 13, borderBottom: "0.5px solid rgba(44,40,32,0.07)", color: a.type === "Credit Card" && a.balance > 0 ? "#A63D3D" : "#2C2820" }}>
-                      {fmtFull(a.balance)}
-                    </td>
-                    <td style={{ padding: "9px 12px", color: "#A09890", fontSize: 11, borderBottom: "0.5px solid rgba(44,40,32,0.07)" }}>{a.lastUpdated}</td>
-                    <td style={{ padding: "9px 12px", display: "flex", gap: 6, borderBottom: "0.5px solid rgba(44,40,32,0.07)" }}>
-                      <button onClick={() => setEditingAccount(a)} style={{
-                        padding: "3px 10px", borderRadius: 4, border: "none", cursor: "pointer",
-                        background: "rgba(44,40,32,0.08)", color: "#5A544C", fontSize: 10,
-                        fontFamily: "'Jost', sans-serif",
-                      }}>Update</button>
-                      <button onClick={() => removeAccount(a.id)} style={{
-                        padding: "3px 10px", borderRadius: 4, border: "none", cursor: "pointer",
-                        background: "rgba(166,61,61,0.08)", color: "#A63D3D", fontSize: 10,
-                        fontFamily: "'Jost', sans-serif",
-                      }}>Remove</button>
-                    </td>
-                  </tr>
-                ))}
+                {accounts.map((a) => {
+                  const badgeStyle = (() => {
+                    if (a.type === "Credit Card") return { bg: "rgba(166,61,61,0.09)", color: "#A63D3D", border: "1px solid rgba(166,61,61,0.15)" };
+                    if (a.type === "Investment")  return { bg: "#eaf0f4", color: "#3a4a5a", border: "1px solid rgba(58,74,90,0.15)" };
+                    if (a.type === "Retirement")  return { bg: "#faf0e6", color: "#b5703a", border: "1px solid rgba(181,112,58,0.15)" };
+                    if (a.type === "Asset")       return { bg: "rgba(212,201,176,0.4)", color: "#7a6045", border: "1px solid #c8bba5" };
+                    return { bg: "#eaf2ec", color: "#2d4a35", border: "1px solid rgba(45,74,53,0.15)" };
+                  })();
+                  return (
+                    <tr key={a.id} style={{ borderBottom: "0.5px solid #e0d8ca" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(212,201,176,0.12)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                      <td style={{ padding: "10px 12px", color: "#3d2e1e", fontWeight: 500 }}>{a.name}</td>
+                      <td style={{ padding: "10px 12px" }}>
+                        <span style={{
+                          display: "inline-block", padding: "2px 10px", borderRadius: 100,
+                          fontFamily: "'Syne', sans-serif", fontSize: "0.58rem",
+                          letterSpacing: "0.08em", textTransform: "uppercase",
+                          background: badgeStyle.bg, color: badgeStyle.color, border: badgeStyle.border,
+                        }}>{a.type}</span>
+                      </td>
+                      <td style={{ padding: "10px 12px", textAlign: "right", fontFamily: "'Jost', sans-serif", fontWeight: 500, fontSize: 13, color: a.type === "Credit Card" && a.balance > 0 ? "#A63D3D" : "#3d2e1e" }}>
+                        {fmtFull(a.balance)}
+                      </td>
+                      <td style={{ padding: "10px 12px", color: "#a89070", fontSize: 11 }}>{a.lastUpdated}</td>
+                      <td style={{ padding: "10px 12px", display: "flex", gap: 6 }}>
+                        <button onClick={() => setEditingAccount(a)} style={{
+                          padding: "4px 12px", borderRadius: 100, border: "none", cursor: "pointer",
+                          background: "#eaf2ec", color: "#2d4a35", fontSize: "0.65rem",
+                          fontFamily: "'Jost', sans-serif", fontWeight: 500, letterSpacing: "0.06em",
+                        }}>Update</button>
+                        <button onClick={() => removeAccount(a.id)} style={{
+                          padding: "4px 12px", borderRadius: 100, border: "none", cursor: "pointer",
+                          background: "rgba(166,61,61,0.09)", color: "#A63D3D", fontSize: "0.65rem",
+                          fontFamily: "'Jost', sans-serif", fontWeight: 500, letterSpacing: "0.06em",
+                        }}>Remove</button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </Card>
@@ -802,12 +836,12 @@ export default function BudgetDashboard() {
                   <Pie data={netWorthPie} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} paddingAngle={2} strokeWidth={0}>
                     {netWorthPie.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={v => fmtFull(v)} contentStyle={{ background: "#F4F1EC", border: "0.5px solid rgba(44,40,32,0.15)", borderRadius: 8, color: "#2C2820" }} />
+                  <Tooltip formatter={v => fmtFull(v)} contentStyle={{ background: "#faf7f2", border: "1px solid #e0d8ca", borderRadius: 8, color: "#3d2e1e" }} />
                 </PieChart>
               </ResponsiveContainer>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px", justifyContent: "center" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 18px", justifyContent: "center", marginTop: 14 }}>
                 {netWorthPie.map((e, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "#A09890" }}>
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "#a89070" }}>
                     <span style={{ width: 8, height: 8, borderRadius: "50%", background: PIE_COLORS[i % PIE_COLORS.length], display: "inline-block" }} />
                     {e.name}: {fmtFull(e.value)}
                   </div>
@@ -819,10 +853,10 @@ export default function BudgetDashboard() {
               <CardTitle>Asset Breakdown</CardTitle>
               <ResponsiveContainer width="100%" height={320}>
                 <BarChart data={netWorthPie} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(44,40,32,0.08)" />
-                  <XAxis type="number" tickFormatter={fmt} tick={{ fill: "#A09890", fontSize: 10 }} axisLine={{ stroke: "rgba(44,40,32,0.08)" }} />
-                  <YAxis type="category" dataKey="name" tick={{ fill: "#A09890", fontSize: 11 }} axisLine={{ stroke: "rgba(44,40,32,0.08)" }} width={120} />
-                  <Tooltip formatter={v => fmtFull(v)} contentStyle={{ background: "#F4F1EC", border: "0.5px solid rgba(44,40,32,0.15)", borderRadius: 8, color: "#2C2820" }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0d8ca" strokeWidth={0.5} />
+                  <XAxis type="number" tickFormatter={fmt} tick={{ fill: "#a89070", fontSize: 9, fontFamily: "Jost" }} axisLine={{ stroke: "#e0d8ca" }} tickLine={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fill: "#a89070", fontSize: 10, fontFamily: "Jost" }} axisLine={{ stroke: "#e0d8ca" }} tickLine={false} width={120} />
+                  <Tooltip formatter={v => fmtFull(v)} contentStyle={{ background: "#faf7f2", border: "1px solid #e0d8ca", borderRadius: 8, color: "#3d2e1e" }} />
                   <Bar dataKey="value" radius={[0, 6, 6, 0]}>
                     {netWorthPie.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Bar>
@@ -837,14 +871,14 @@ export default function BudgetDashboard() {
       {editingAccount && (
         <Modal title="Edit Account" onClose={() => setEditingAccount(null)}>
           <Input label="Account Name" type="text" value={editingAccount.name} onChange={v => setEditingAccount({ ...editingAccount, name: v })} />
-          <div style={{ marginBottom: 12 }}>
-            <label style={{ display: "block", fontSize: 10, fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase", color: "#A09890", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Type</label>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: "block", fontSize: "0.58rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "#a89070", marginBottom: 5, fontFamily: "'Syne', sans-serif" }}>Type</label>
             <select
               value={editingAccount.type}
               onChange={e => setEditingAccount({ ...editingAccount, type: e.target.value })}
               style={{
-                width: "100%", padding: "8px 10px", borderRadius: 6, border: "0.5px solid rgba(44,40,32,0.20)",
-                background: "#F4F1EC", color: "#2C2820", fontSize: 13, fontFamily: "'Jost', sans-serif",
+                width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid #c8bba5",
+                background: "#f5f1e8", color: "#3d2e1e", fontSize: 13, fontFamily: "'Jost', sans-serif",
               }}
             >
               {["Checking", "Savings", "Credit Card", "Investment", "Retirement", "Asset"].map(t => (
@@ -862,11 +896,11 @@ export default function BudgetDashboard() {
 
       {editingPeriod !== null && (
         <Modal title={`Edit Period: ${budget[editingPeriod].period}`} onClose={() => setEditingPeriod(null)}>
-          <div style={{ fontSize: 9, color: "#A09890", marginBottom: 10, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.10em", fontFamily: "'Jost', sans-serif" }}>Income</div>
+          <div style={{ fontSize: "0.58rem", color: "#a89070", marginBottom: 10, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Income</div>
           <Input label="Carryover" value={budget[editingPeriod].carryover} onChange={v => updatePeriod(editingPeriod, "carryover", v)} />
           <Input label="Income" value={budget[editingPeriod].income} onChange={v => updatePeriod(editingPeriod, "income", v)} />
           <Input label="Misc Transfer" value={budget[editingPeriod].misc} onChange={v => updatePeriod(editingPeriod, "misc", v)} />
-          <div style={{ fontSize: 9, color: "#A09890", margin: "14px 0 10px", textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.10em", fontFamily: "'Jost', sans-serif" }}>Expenses</div>
+          <div style={{ fontSize: "0.58rem", color: "#a89070", margin: "16px 0 10px", textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Expenses</div>
           <Input label="Mortgage" value={budget[editingPeriod].mortgage} onChange={v => updatePeriod(editingPeriod, "mortgage", v)} />
           <Input label="Water & Power" value={budget[editingPeriod].water} onChange={v => updatePeriod(editingPeriod, "water", v)} />
           <Input label="Housekeeping" value={budget[editingPeriod].housekeeping} onChange={v => updatePeriod(editingPeriod, "housekeeping", v)} />
@@ -891,15 +925,15 @@ export default function BudgetDashboard() {
           <Modal title={`Edit ${editingMonth}`} onClose={() => setEditingMonth(null)}>
             {periods.map(({ row, idx }, pi) => (
               <div key={idx}>
-                {pi > 0 && <hr style={{ border: "none", borderTop: "0.5px solid rgba(44,40,32,0.15)", margin: "14px 0" }} />}
-                <div style={{ fontSize: 12, fontWeight: 400, color: "#B5871A", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>
+                {pi > 0 && <hr style={{ border: "none", borderTop: "1px solid #e0d8ca", margin: "16px 0" }} />}
+                <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#b5703a", marginBottom: 12, fontFamily: "'Cormorant Garamond', serif" }}>
                   Period: {row.period}
                 </div>
-                <div style={{ fontSize: 9, color: "#A09890", marginBottom: 8, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.10em", fontFamily: "'Jost', sans-serif" }}>Income</div>
+                <div style={{ fontSize: "0.58rem", color: "#a89070", marginBottom: 8, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Income</div>
                 <Input label="Carryover" value={row.carryover} onChange={v => updatePeriod(idx, "carryover", v)} />
                 <Input label="Income" value={row.income} onChange={v => updatePeriod(idx, "income", v)} />
                 <Input label="Misc Transfer" value={row.misc} onChange={v => updatePeriod(idx, "misc", v)} />
-                <div style={{ fontSize: 9, color: "#A09890", margin: "10px 0 8px", textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.10em", fontFamily: "'Jost', sans-serif" }}>Expenses</div>
+                <div style={{ fontSize: "0.58rem", color: "#a89070", margin: "16px 0 10px", textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Expenses</div>
                 <Input label="Mortgage" value={row.mortgage} onChange={v => updatePeriod(idx, "mortgage", v)} />
                 <Input label="Water & Power" value={row.water} onChange={v => updatePeriod(idx, "water", v)} />
                 <Input label="Housekeeping" value={row.housekeeping} onChange={v => updatePeriod(idx, "housekeeping", v)} />
@@ -919,14 +953,14 @@ export default function BudgetDashboard() {
       {addingAccount && (
         <Modal title="Add New Account" onClose={() => setAddingAccount(false)}>
           <Input label="Account Name" value={newAccount.name} type="text" onChange={v => setNewAccount(p => ({ ...p, name: v }))} />
-          <div style={{ marginBottom: 12 }}>
-            <label style={{ display: "block", fontSize: 10, fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase", color: "#A09890", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Type</label>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: "block", fontSize: "0.58rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "#a89070", marginBottom: 5, fontFamily: "'Syne', sans-serif" }}>Type</label>
             <select
               value={newAccount.type}
               onChange={e => setNewAccount(p => ({ ...p, type: e.target.value }))}
               style={{
-                width: "100%", padding: "8px 10px", borderRadius: 6, border: "0.5px solid rgba(44,40,32,0.20)",
-                background: "#F4F1EC", color: "#2C2820", fontSize: 13, fontFamily: "'Jost', sans-serif",
+                width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid #c8bba5",
+                background: "#f5f1e8", color: "#3d2e1e", fontSize: 13, fontFamily: "'Jost', sans-serif",
               }}
             >
               {["Checking", "Savings", "Credit Card", "Investment", "Retirement", "Asset"].map(t => (
@@ -942,9 +976,16 @@ export default function BudgetDashboard() {
         </Modal>
       )}
 
-      <div style={{ textAlign: "center", padding: "16px 0 8px", fontSize: 11, fontWeight: 300, color: "#A09890", fontFamily: "'Jost', sans-serif" }}>
-        Budget Manager • Built from your Budget.xlsx data
       </div>
+      {/* Fixed footer bar */}
+      <div style={{
+        position: "fixed", bottom: 0, left: 0, right: 0, height: 36, zIndex: 490,
+        background: "#1a1a18", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+      }}>
+        <span style={{
+          fontFamily: "'Syne', sans-serif", fontSize: "0.6rem", fontWeight: 500,
+          letterSpacing: "0.28em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)",
+        }}>Lotus Ledger · Personal Finance · 2026</span>
       </div>
     </div>
   );
