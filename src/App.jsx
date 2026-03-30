@@ -19,24 +19,29 @@ const initialAccounts = [
   { id: 10, name: "BofA Business", type: "Checking", balance: 6066.41, lastUpdated: "2026-03-29" },
 ];
 
-const payPeriods = [
-  "Jan 2", "Jan 16", "Jan 30", "Feb 13", "Feb 27", "Mar 13", "Mar 27",
-  "Apr 10", "Apr 24", "May 8", "May 22", "Jun 5", "Jun 19",
-  "Jul 2", "Jul 16", "Jul 30", "Aug 13", "Aug 27",
-  "Sep 10", "Sep 24", "Oct 8", "Oct 22", "Nov 5", "Nov 19", "Dec 3", "Dec 17"
+const monthNames = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December"
 ];
 
 const initialBudgetData = [
-  { period: "Jan 2", carryover: 4525.15, income: 0, misc: 0, totalIncome: 4525.15, mortgage: 0, water: 0, housekeeping: 0, preschool: 0, cash: 0, chase: 1000, robinhood: 0, totalExpense: 1000, balance: 200 },
-  { period: "Jan 16", carryover: 200, income: 1700, misc: 0, totalIncome: 1900, mortgage: 0, water: 0, housekeeping: 175, preschool: 0, cash: 125, chase: 900, robinhood: 0, totalExpense: 1200, balance: 700 },
-  { period: "Jan 30", carryover: 400, income: 14000, misc: 0, totalIncome: 14400, mortgage: 4210, water: 0, housekeeping: 175, preschool: 1900, cash: 0, chase: 2000, robinhood: 5000, totalExpense: 13285, balance: 1115 },
-  { period: "Feb 13", carryover: 1115, income: 0, misc: 0, totalIncome: 1115, mortgage: 0, water: 0, housekeeping: 175, preschool: 0, cash: 125, chase: 900, robinhood: 0, totalExpense: 1200, balance: -85 },
-  { period: "Feb 27", carryover: 11000, income: 7000, misc: 0, totalIncome: 18000, mortgage: 4210, water: 0, housekeeping: 0, preschool: 1900, cash: 0, chase: 2000, robinhood: 8000, totalExpense: 16110, balance: 1890 },
-  { period: "Mar 13", carryover: 1890, income: 1700, misc: 0, totalIncome: 3590, mortgage: 0, water: 0, housekeeping: 175, preschool: 0, cash: 125, chase: 900, robinhood: 0, totalExpense: 1200, balance: 2390 },
-  { period: "Mar 27", carryover: 2390, income: 9000, misc: 0, totalIncome: 11390, mortgage: 4210, water: 370.16, housekeeping: 0, preschool: 1900, cash: 0, chase: 836.87, robinhood: 0, totalExpense: 7317.03, balance: 4072.97 },
-  { period: "Apr 10", carryover: 4072.97, income: 1700, misc: 0, totalIncome: 5772.97, mortgage: 0, water: 0, housekeeping: 175, preschool: 0, cash: 125, chase: 900, robinhood: 0, totalExpense: 1200, balance: 4572.97 },
-  { period: "Apr 24", carryover: 3000, income: 7826, misc: 1800, totalIncome: 12626, mortgage: 4210, water: 670, housekeeping: 0, preschool: 1900, cash: 0, chase: 2600, robinhood: 0, totalExpense: 9380, balance: 3246 },
-];
+  { period: "January",   carryover: 4525, income: 15700, misc: 0,    mortgage: 4210, water: 0,   housekeeping: 350, preschool: 1900, cash: 125, chase: 3900, robinhood: 5000 },
+  { period: "February",  carryover: 1115, income: 7000,  misc: 0,    mortgage: 4210, water: 0,   housekeeping: 175, preschool: 1900, cash: 125, chase: 2900, robinhood: 8000 },
+  { period: "March",     carryover: 1890, income: 10700, misc: 0,    mortgage: 4210, water: 370, housekeeping: 175, preschool: 1900, cash: 125, chase: 1737, robinhood: 0    },
+  { period: "April",     carryover: 3000, income: 15826, misc: 2800, mortgage: 8420, water: 820, housekeeping: 350, preschool: 3800, cash: 300, chase: 5100, robinhood: 0    },
+  { period: "May",       carryover: 0,    income: 0,     misc: 0,    mortgage: 0,    water: 0,   housekeeping: 0,   preschool: 0,    cash: 0,   chase: 0,    robinhood: 0    },
+  { period: "June",      carryover: 0,    income: 0,     misc: 0,    mortgage: 0,    water: 0,   housekeeping: 0,   preschool: 0,    cash: 0,   chase: 0,    robinhood: 0    },
+  { period: "July",      carryover: 0,    income: 0,     misc: 0,    mortgage: 0,    water: 0,   housekeeping: 0,   preschool: 0,    cash: 0,   chase: 0,    robinhood: 0    },
+  { period: "August",    carryover: 0,    income: 0,     misc: 0,    mortgage: 0,    water: 0,   housekeeping: 0,   preschool: 0,    cash: 0,   chase: 0,    robinhood: 0    },
+  { period: "September", carryover: 0,    income: 0,     misc: 0,    mortgage: 0,    water: 0,   housekeeping: 0,   preschool: 0,    cash: 0,   chase: 0,    robinhood: 0    },
+  { period: "October",   carryover: 0,    income: 0,     misc: 0,    mortgage: 0,    water: 0,   housekeeping: 0,   preschool: 0,    cash: 0,   chase: 0,    robinhood: 0    },
+  { period: "November",  carryover: 0,    income: 0,     misc: 0,    mortgage: 0,    water: 0,   housekeeping: 0,   preschool: 0,    cash: 0,   chase: 0,    robinhood: 0    },
+  { period: "December",  carryover: 0,    income: 0,     misc: 0,    mortgage: 0,    water: 0,   housekeeping: 0,   preschool: 0,    cash: 0,   chase: 0,    robinhood: 0    },
+].map(r => {
+  const totalIncome = r.carryover + r.income + r.misc;
+  const totalExpense = r.mortgage + r.water + r.housekeeping + r.preschool + r.cash + r.chase + r.robinhood;
+  return { ...r, totalIncome, totalExpense, balance: totalIncome - totalExpense };
+});
 
 const businessPayPeriods = [
   "Jan 2","Jan 16","Jan 30","Feb 13","Feb 27","Mar 13","Mar 27",
@@ -304,7 +309,7 @@ const Btn = ({ onClick, children, variant = "primary", style = {} }) => (
 );
 
 // ── localStorage helpers ─────────────────────────────────────
-const STORAGE_KEYS = { accounts: "budget_accounts", budget: "budget_data", netWorth: "budget_networth", businessBudget: "business_budget" };
+const STORAGE_KEYS = { accounts: "budget_accounts", budget: "budget_data_monthly", netWorth: "budget_networth", businessBudget: "business_budget" };
 
 const loadState = (key, fallback) => {
   try {
@@ -325,16 +330,15 @@ export default function BudgetDashboard() {
   const [accounts, setAccounts] = useState(() => loadState(STORAGE_KEYS.accounts, initialAccounts));
   const [budget, setBudget] = useState(() => {
     const saved = loadState(STORAGE_KEYS.budget, initialBudgetData);
-    const savedPeriods = new Set(saved.map(r => r.period));
-    const missing = payPeriods
-      .filter(p => !savedPeriods.has(p))
-      .map(p => ({ period: p, carryover: 0, income: 0, misc: 0, totalIncome: 0, mortgage: 0, water: 0, housekeeping: 0, preschool: 0, cash: 0, chase: 0, robinhood: 0, totalExpense: 0, balance: 0 }));
+    const savedMonths = new Set(saved.map(r => r.period));
+    const missing = monthNames
+      .filter(m => !savedMonths.has(m))
+      .map(m => ({ period: m, carryover: 0, income: 0, misc: 0, totalIncome: 0, mortgage: 0, water: 0, housekeeping: 0, preschool: 0, cash: 0, chase: 0, robinhood: 0, totalExpense: 0, balance: 0 }));
     if (!missing.length) return saved;
-    return [...saved, ...missing].sort((a, b) => payPeriods.indexOf(a.period) - payPeriods.indexOf(b.period));
+    return [...saved, ...missing].sort((a, b) => monthNames.indexOf(a.period) - monthNames.indexOf(b.period));
   });
   const [businessBudget, setBusinessBudget] = useState(() => loadState(STORAGE_KEYS.businessBudget, initialBusinessData));
   const [editingAccount, setEditingAccount] = useState(null);
-  const [editingPeriod, setEditingPeriod] = useState(null);
   const [addingAccount, setAddingAccount] = useState(false);
   const [newAccount, setNewAccount] = useState({ name: "", type: "Checking", balance: 0 });
   const [overviewRange, setOverviewRange] = useState("ytd");
@@ -384,33 +388,9 @@ export default function BudgetDashboard() {
     netWorthItems.filter(i => i.value > 0).map(i => ({ ...i })), []);
 
   const MONTH_MAP = { Jan:"January", Feb:"February", Mar:"March", Apr:"April", May:"May", Jun:"June", Jul:"July", Aug:"August", Sep:"September", Oct:"October", Nov:"November", Dec:"December" };
-  const MONTH_ORDER = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const MONTH_ORDER = monthNames;
   const CURRENT_MONTH_IDX = 2; // March 2026
-  const monthlyBudget = useMemo(() => {
-    const groups = [];
-    const seen = {};
-    budget.forEach(row => {
-      const abbr = row.period.split(" ")[0];
-      const name = MONTH_MAP[abbr] || abbr;
-      if (!seen[name]) { seen[name] = true; groups.push({ name, rows: [] }); }
-      groups[groups.length - 1].rows.push(row);
-    });
-    return groups.map(({ name, rows }) => {
-      const carryover   = rows[0].carryover;
-      const income      = rows.reduce((s, r) => s + r.income, 0);
-      const misc        = rows.reduce((s, r) => s + r.misc, 0);
-      const mortgage    = rows.reduce((s, r) => s + r.mortgage, 0);
-      const water       = rows.reduce((s, r) => s + r.water, 0);
-      const housekeeping = rows.reduce((s, r) => s + r.housekeeping, 0);
-      const preschool   = rows.reduce((s, r) => s + r.preschool, 0);
-      const cash        = rows.reduce((s, r) => s + r.cash, 0);
-      const chase       = rows.reduce((s, r) => s + r.chase, 0);
-      const robinhood   = rows.reduce((s, r) => s + r.robinhood, 0);
-      const totalIncome  = carryover + income + misc;
-      const totalExpense = mortgage + water + housekeeping + preschool + cash + chase + robinhood;
-      return { period: name, carryover, income, misc, totalIncome, mortgage, water, housekeeping, preschool, cash, chase, robinhood, totalExpense, balance: totalIncome - totalExpense };
-    });
-  }, [budget]);
+  const monthlyBudget = budget;
 
   const overviewData = useMemo(() => {
     if (overviewRange === "ytd") return monthlyBudget.filter((_, i) => i <= CURRENT_MONTH_IDX);
@@ -919,60 +899,24 @@ export default function BudgetDashboard() {
         </Modal>
       )}
 
-      {editingPeriod !== null && (
-        <Modal title={`Edit Period: ${budget[editingPeriod].period}`} onClose={() => setEditingPeriod(null)}>
-          <div style={{ fontSize: "0.58rem", color: "#a89070", marginBottom: 10, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Income</div>
-          <Input label="Carryover" value={budget[editingPeriod].carryover} onChange={v => updatePeriod(editingPeriod, "carryover", v)} />
-          <Input label="Income" value={budget[editingPeriod].income} onChange={v => updatePeriod(editingPeriod, "income", v)} />
-          <Input label="Misc Transfer" value={budget[editingPeriod].misc} onChange={v => updatePeriod(editingPeriod, "misc", v)} />
-          <div style={{ fontSize: "0.58rem", color: "#a89070", margin: "16px 0 10px", textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Expenses</div>
-          <Input label="Mortgage" value={budget[editingPeriod].mortgage} onChange={v => updatePeriod(editingPeriod, "mortgage", v)} />
-          <Input label="Water & Power" value={budget[editingPeriod].water} onChange={v => updatePeriod(editingPeriod, "water", v)} />
-          <Input label="Housekeeping" value={budget[editingPeriod].housekeeping} onChange={v => updatePeriod(editingPeriod, "housekeeping", v)} />
-          <Input label="Pre-school" value={budget[editingPeriod].preschool} onChange={v => updatePeriod(editingPeriod, "preschool", v)} />
-          <Input label="Cash Expense" value={budget[editingPeriod].cash} onChange={v => updatePeriod(editingPeriod, "cash", v)} />
-          <Input label="Chase Payment" value={budget[editingPeriod].chase} onChange={v => updatePeriod(editingPeriod, "chase", v)} />
-          <Input label="Robinhood / Fidelity" value={budget[editingPeriod].robinhood} onChange={v => updatePeriod(editingPeriod, "robinhood", v)} />
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-            <Btn onClick={() => setEditingPeriod(null)}>Done</Btn>
-          </div>
-        </Modal>
-      )}
-
       {editingMonth && (() => {
-        const periods = budget
-          .map((row, idx) => ({ row, idx }))
-          .filter(({ row }) => {
-            const abbr = row.period.split(" ")[0];
-            return MONTH_MAP[abbr] === editingMonth;
-          });
+        const idx = budget.findIndex(r => r.period === editingMonth);
+        if (idx === -1) return null;
+        const row = budget[idx];
         return (
           <Modal title={`Edit ${editingMonth}`} onClose={() => setEditingMonth(null)}>
-            {periods.length > 1 && (
-              <div style={{ fontSize: "0.7rem", color: "#a89070", background: "#f0ebe0", borderRadius: 6, padding: "8px 12px", marginBottom: 16, fontFamily: "'Jost', sans-serif" }}>
-                Values below are <strong>per pay period</strong>. The table shows monthly totals (sum of all {periods.length} periods).
-              </div>
-            )}
-            {periods.map(({ row, idx }, pi) => (
-              <div key={idx}>
-                {pi > 0 && <hr style={{ border: "none", borderTop: "1px solid #e0d8ca", margin: "16px 0" }} />}
-                <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#b5703a", marginBottom: 12, fontFamily: "'Cormorant Garamond', serif" }}>
-                  Period: {row.period}
-                </div>
-                <div style={{ fontSize: "0.58rem", color: "#a89070", marginBottom: 8, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Income</div>
-                <Input label="Carryover" value={row.carryover} onChange={v => updatePeriod(idx, "carryover", v)} />
-                <Input label="Income" value={row.income} onChange={v => updatePeriod(idx, "income", v)} />
-                <Input label="Misc Transfer" value={row.misc} onChange={v => updatePeriod(idx, "misc", v)} />
-                <div style={{ fontSize: "0.58rem", color: "#a89070", margin: "16px 0 10px", textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Expenses</div>
-                <Input label="Mortgage" value={row.mortgage} onChange={v => updatePeriod(idx, "mortgage", v)} />
-                <Input label="Water & Power" value={row.water} onChange={v => updatePeriod(idx, "water", v)} />
-                <Input label="Housekeeping" value={row.housekeeping} onChange={v => updatePeriod(idx, "housekeeping", v)} />
-                <Input label="Pre-school" value={row.preschool} onChange={v => updatePeriod(idx, "preschool", v)} />
-                <Input label="Cash Expense" value={row.cash} onChange={v => updatePeriod(idx, "cash", v)} />
-                <Input label="Chase Payment" value={row.chase} onChange={v => updatePeriod(idx, "chase", v)} />
-                <Input label="Robinhood / Fidelity" value={row.robinhood} onChange={v => updatePeriod(idx, "robinhood", v)} />
-              </div>
-            ))}
+            <div style={{ fontSize: "0.58rem", color: "#a89070", marginBottom: 8, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Income</div>
+            <Input label="Carryover" value={row.carryover} onChange={v => updatePeriod(idx, "carryover", v)} />
+            <Input label="Income" value={row.income} onChange={v => updatePeriod(idx, "income", v)} />
+            <Input label="Misc Transfer" value={row.misc} onChange={v => updatePeriod(idx, "misc", v)} />
+            <div style={{ fontSize: "0.58rem", color: "#a89070", margin: "16px 0 10px", textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Expenses</div>
+            <Input label="Mortgage" value={row.mortgage} onChange={v => updatePeriod(idx, "mortgage", v)} />
+            <Input label="Water & Power" value={row.water} onChange={v => updatePeriod(idx, "water", v)} />
+            <Input label="Housekeeping" value={row.housekeeping} onChange={v => updatePeriod(idx, "housekeeping", v)} />
+            <Input label="Pre-school" value={row.preschool} onChange={v => updatePeriod(idx, "preschool", v)} />
+            <Input label="Cash Expense" value={row.cash} onChange={v => updatePeriod(idx, "cash", v)} />
+            <Input label="Chase Payment" value={row.chase} onChange={v => updatePeriod(idx, "chase", v)} />
+            <Input label="Robinhood / Fidelity" value={row.robinhood} onChange={v => updatePeriod(idx, "robinhood", v)} />
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>
               <Btn onClick={() => setEditingMonth(null)}>Done</Btn>
             </div>
