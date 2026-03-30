@@ -242,24 +242,48 @@ const Modal = ({ title, onClose, children }) => (
   </div>
 );
 
-const Input = ({ label, value, onChange, type = "number" }) => (
-  <div style={{ marginBottom: 14 }}>
-    <label style={{
-      display: "block", fontSize: "0.58rem", fontWeight: 500, letterSpacing: "0.12em",
-      textTransform: "uppercase", color: "#a89070", marginBottom: 5,
-      fontFamily: "'Syne', sans-serif",
-    }}>{label}</label>
-    <input
-      type={type} value={value} onChange={e => onChange(type === "number" ? parseFloat(e.target.value) || 0 : e.target.value)}
-      style={{
-        width: "100%", padding: "9px 12px", background: "#f5f1e8",
-        border: "1px solid #c8bba5", borderRadius: 6,
-        fontSize: 13, color: "#3d2e1e", fontFamily: "'Jost', sans-serif",
-        outline: "none", boxSizing: "border-box",
-      }}
-    />
-  </div>
-);
+const Input = ({ label, value, onChange, type = "number" }) => {
+  const [display, setDisplay] = React.useState(() => type === "number" ? String(value ?? 0) : value);
+  const focused = React.useRef(false);
+  React.useEffect(() => {
+    if (!focused.current) setDisplay(type === "number" ? String(value ?? 0) : value);
+  }, [value, type]);
+  if (type !== "number") {
+    return (
+      <div style={{ marginBottom: 14 }}>
+        <label style={{ display: "block", fontSize: "0.58rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "#a89070", marginBottom: 5, fontFamily: "'Syne', sans-serif" }}>{label}</label>
+        <input type={type} value={value} onChange={e => onChange(e.target.value)} style={{ width: "100%", padding: "9px 12px", background: "#f5f1e8", border: "1px solid #c8bba5", borderRadius: 6, fontSize: 13, color: "#3d2e1e", fontFamily: "'Jost', sans-serif", outline: "none", boxSizing: "border-box" }} />
+      </div>
+    );
+  }
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <label style={{ display: "block", fontSize: "0.58rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "#a89070", marginBottom: 5, fontFamily: "'Syne', sans-serif" }}>{label}</label>
+      <input
+        type="text"
+        inputMode="decimal"
+        value={display}
+        onFocus={() => { focused.current = true; }}
+        onChange={e => {
+          const raw = e.target.value;
+          if (raw === "" || /^-?\d*\.?\d*$/.test(raw)) {
+            setDisplay(raw);
+            const num = parseFloat(raw);
+            if (!isNaN(num)) onChange(num);
+          }
+        }}
+        onBlur={() => {
+          focused.current = false;
+          const num = parseFloat(display);
+          const final = isNaN(num) ? 0 : num;
+          setDisplay(String(final));
+          onChange(final);
+        }}
+        style={{ width: "100%", padding: "9px 12px", background: "#f5f1e8", border: "1px solid #c8bba5", borderRadius: 6, fontSize: 13, color: "#3d2e1e", fontFamily: "'Jost', sans-serif", outline: "none", boxSizing: "border-box" }}
+      />
+    </div>
+  );
+};
 
 const Btn = ({ onClick, children, variant = "primary", style = {} }) => (
   <button onClick={onClick} style={{
@@ -924,6 +948,11 @@ export default function BudgetDashboard() {
           });
         return (
           <Modal title={`Edit ${editingMonth}`} onClose={() => setEditingMonth(null)}>
+            {periods.length > 1 && (
+              <div style={{ fontSize: "0.7rem", color: "#a89070", background: "#f0ebe0", borderRadius: 6, padding: "8px 12px", marginBottom: 16, fontFamily: "'Jost', sans-serif" }}>
+                Values below are <strong>per pay period</strong>. The table shows monthly totals (sum of all {periods.length} periods).
+              </div>
+            )}
             {periods.map(({ row, idx }, pi) => (
               <div key={idx}>
                 {pi > 0 && <hr style={{ border: "none", borderTop: "1px solid #e0d8ca", margin: "16px 0" }} />}
