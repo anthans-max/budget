@@ -635,7 +635,7 @@ export default function BudgetDashboard() {
         <Card>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <CardTitle>Personal Budget — 2026 (Monthly)</CardTitle>
-            <Btn variant="secondary" onClick={() => setManagingCategories(true)}>Manage Categories</Btn>
+            <Btn variant="primary" onClick={() => setManagingCategories(true)}>Manage Categories</Btn>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 900 }}>
