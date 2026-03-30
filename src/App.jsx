@@ -167,11 +167,11 @@ const ChartTooltip = ({ active, payload, label }) => {
 // ── Tab Button ───────────────────────────────────────────────
 const TabBtn = ({ active, onClick, children }) => (
   <button onClick={onClick} style={{
-    background: "transparent",
-    border: "none",
-    borderBottom: active ? "2px solid #b5703a" : "2px solid transparent",
-    color: active ? "#b5703a" : "#a89070",
-    padding: "6px 14px",
+    background: active ? "#2d4a35" : "transparent",
+    border: active ? "none" : "none",
+    borderRadius: 100,
+    color: active ? "#faf7f2" : "#a89070",
+    padding: "7px 18px",
     fontSize: "0.62rem",
     fontWeight: 500,
     fontFamily: "'Syne', sans-serif",
@@ -187,8 +187,9 @@ const KPI = ({ title, value, subtitle, color, negative = false }) => (
   <div style={{
     background: "#f5f1e8",
     border: "1px solid #e0d8ca",
-    borderRadius: 10,
-    padding: "16px 18px",
+    borderLeft: "3px solid #b5703a",
+    borderRadius: "0 10px 10px 0",
+    padding: "16px 20px",
     flex: 1,
     minWidth: 160,
   }}>
