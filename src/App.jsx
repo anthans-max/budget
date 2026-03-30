@@ -1005,8 +1005,17 @@ export default function BudgetDashboard() {
       {managingCategories && (
         <Modal title="Manage Categories" onClose={() => setManagingCategories(false)}>
           <div style={{ marginBottom: 4 }}>
+            {/* Fixed income columns — shown as read-only */}
+            {[{ label: "Carryover" }, { label: "Income" }, { label: "Misc" }].map(col => (
+              <div key={col.label} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "0.5px solid #e0d8ca", opacity: 0.6 }}>
+                <div style={{ width: 20 }} />
+                <input value={col.label} disabled style={{ flex: 1, padding: "5px 8px", background: "#ede9df", border: "1px solid #d4c9b0", borderRadius: 6, fontSize: 13, color: "#7a6045", fontFamily: "'Jost', sans-serif", outline: "none" }} />
+                <span style={{ fontSize: "0.58rem", color: "#2d4a35", fontFamily: "'Syne', sans-serif", textTransform: "uppercase", letterSpacing: "0.08em", minWidth: 52 }}>income</span>
+                <div style={{ width: 22 }} />
+              </div>
+            ))}
             {personalCategories.length === 0 && (
-              <div style={{ color: "#a89070", fontSize: 12, padding: "8px 0" }}>No categories yet.</div>
+              <div style={{ color: "#a89070", fontSize: 12, padding: "8px 0" }}>No expense categories yet.</div>
             )}
             {personalCategories.map((cat, idx) => (
               <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "0.5px solid #e0d8ca" }}>
