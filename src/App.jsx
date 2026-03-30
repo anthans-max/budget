@@ -318,7 +318,7 @@ const Btn = ({ onClick, children, variant = "primary", style = {} }) => (
 );
 
 // ── localStorage helpers ─────────────────────────────────────
-const STORAGE_KEYS = { accounts: "budget_accounts", budget: "budget_data_monthly", netWorth: "budget_networth", businessBudget: "business_budget", personalCategories: "personal_categories_v2" };
+const STORAGE_KEYS = { accounts: "budget_accounts", budget: "budget_data_monthly", netWorth: "budget_networth", businessBudget: "business_budget", personalCategories: "personal_categories_v3" };
 
 const loadState = (key, fallback) => {
   try {
@@ -357,13 +357,16 @@ export default function BudgetDashboard() {
   const [managingCategories, setManagingCategories] = useState(false);
   const [newCategoryForm, setNewCategoryForm] = useState({ label: "", type: "expense" });
   const [personalCategories, setPersonalCategories] = useState(() => loadState(STORAGE_KEYS.personalCategories, [
+    { id: "carryover",    label: "Carryover",  type: "income"  },
+    { id: "income",       label: "Income",     type: "income"  },
+    { id: "misc",         label: "Misc",       type: "income"  },
     { id: "mortgage",     label: "Mortgage",   type: "expense" },
     { id: "water",        label: "Water",       type: "expense" },
-    { id: "housekeeping", label: "Housekeep",   type: "expense" },
-    { id: "preschool",    label: "Pre-School",  type: "expense" },
+    { id: "housekeeping", label: "Housekeep",  type: "expense" },
+    { id: "preschool",    label: "Pre-School", type: "expense" },
     { id: "cash",         label: "Cash",        type: "expense" },
     { id: "chase",        label: "Chase",       type: "expense" },
-    { id: "robinhood",    label: "Robinhood",   type: "expense" },
+    { id: "robinhood",    label: "Robinhood",  type: "expense" },
   ]));
 
   // ── Persist to localStorage on change ────────────────────
@@ -393,18 +396,12 @@ export default function BudgetDashboard() {
   const latestBalance = budget.length > 0 ? budget[budget.length - 1].balance : 0;
 
   const expenseBreakdown = useMemo(() => {
-    const cats = { Mortgage: 0, Utilities: 0, Housekeeping: 0, "Pre-school": 0, Cash: 0, "Chase Payment": 0, "Robinhood/Fidelity": 0 };
-    budget.forEach(b => {
-      cats.Mortgage += b.mortgage;
-      cats.Utilities += b.water;
-      cats.Housekeeping += b.housekeeping;
-      cats["Pre-school"] += b.preschool;
-      cats.Cash += b.cash;
-      cats["Chase Payment"] += b.chase;
-      cats["Robinhood/Fidelity"] += b.robinhood;
-    });
-    return Object.entries(cats).filter(([, v]) => v > 0).map(([name, value]) => ({ name, value }));
-  }, [budget]);
+    const expCats = personalCategories.filter(c => c.type === "expense");
+    const totals = {};
+    expCats.forEach(c => { totals[c.label] = 0; });
+    budget.forEach(b => expCats.forEach(c => { totals[c.label] = (totals[c.label] || 0) + (b[c.id] || 0); }));
+    return Object.entries(totals).filter(([, v]) => v > 0).map(([name, value]) => ({ name, value }));
+  }, [budget, personalCategories]);
 
   const netWorthPie = useMemo(() =>
     netWorthItems.filter(i => i.value > 0).map(i => ({ ...i })), []);
@@ -419,8 +416,14 @@ export default function BudgetDashboard() {
     if (overviewRange === "month") return monthlyBudget.filter(r => r.period === overviewMonth);
     return monthlyBudget;
   }, [overviewRange, overviewMonth, monthlyBudget]);
-  const overviewIncome = useMemo(() => overviewData.reduce((s, r) => s + r.totalIncome, 0), [overviewData]);
-  const overviewExpenses = useMemo(() => overviewData.reduce((s, r) => s + r.totalExpense, 0), [overviewData]);
+  const overviewIncome = useMemo(() => {
+    const incCats = personalCategories.filter(c => c.type === "income");
+    return overviewData.reduce((s, r) => s + incCats.reduce((si, c) => si + (r[c.id] || 0), 0), 0);
+  }, [overviewData, personalCategories]);
+  const overviewExpenses = useMemo(() => {
+    const expCats = personalCategories.filter(c => c.type === "expense");
+    return overviewData.reduce((s, r) => s + expCats.reduce((se, c) => se + (r[c.id] || 0), 0), 0);
+  }, [overviewData, personalCategories]);
 
   const monthlyBusinessBudget = useMemo(() => {
     const groups = [];
@@ -479,7 +482,7 @@ export default function BudgetDashboard() {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: value };
       const p = updated[index];
-      p.totalIncome = p.carryover + p.income + p.misc;
+      p.totalIncome = personalCategories.filter(c => c.type === "income").reduce((s, c) => s + (p[c.id] || 0), 0);
       p.totalExpense = personalCategories
         .filter(c => c.type === "expense")
         .reduce((s, c) => s + (p[c.id] || 0), 0);
@@ -641,9 +644,7 @@ export default function BudgetDashboard() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: Math.max(900, 300 + personalCategories.length * 100) }}>
               <thead>
                 <tr>
-                  {["Period", "Carryover", "Income", "Misc", "Total In",
-                    ...personalCategories.map(c => c.label),
-                    "Total Exp", "Balance", ""].map((h, hi, arr) => (
+                  {["Period", ...personalCategories.map(c => c.label), "Total In", "Total Exp", "Balance", ""].map((h, hi, arr) => (
                     <th key={`${h}-${hi}`} style={{
                       textAlign: h === "Period" || h === "" ? "left" : "right",
                       padding: "8px 12px", background: "rgba(212,201,176,0.3)",
@@ -659,14 +660,6 @@ export default function BudgetDashboard() {
                 {monthlyBudget.map((row, i) => (
                   <tr key={i} style={{ borderBottom: "0.5px solid #e0d8ca" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(212,201,176,0.12)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                     <td style={{ padding: "10px 12px", color: "#3d2e1e", fontWeight: 500 }}>{row.period}</td>
-                    {[row.carryover, row.income, row.misc].map((val, j) => (
-                      <td key={j} style={{ textAlign: "right", padding: "10px 12px", color: "#7a6045", fontFamily: "'Jost', sans-serif", fontSize: 11 }}>
-                        {val === 0 ? "—" : fmtFull(val)}
-                      </td>
-                    ))}
-                    <td style={{ textAlign: "right", padding: "10px 12px", color: "#2d4a35", fontWeight: 500, fontFamily: "'Jost', sans-serif", fontSize: 11 }}>
-                      {row.totalIncome === 0 ? "—" : fmtFull(row.totalIncome)}
-                    </td>
                     {personalCategories.map(cat => {
                       const val = row[cat.id] || 0;
                       return (
@@ -675,12 +668,16 @@ export default function BudgetDashboard() {
                         </td>
                       );
                     })}
-                    <td style={{ textAlign: "right", padding: "10px 12px", color: "#A63D3D", fontWeight: 500, fontFamily: "'Jost', sans-serif", fontSize: 11 }}>
-                      {row.totalExpense === 0 ? "—" : fmtFull(row.totalExpense)}
-                    </td>
-                    <td style={{ textAlign: "right", padding: "10px 12px", color: row.balance < 0 ? "#A63D3D" : "#2d4a35", fontWeight: 500, fontFamily: "'Jost', sans-serif", fontSize: 11 }}>
-                      {fmtFull(row.balance)}
-                    </td>
+                    {(() => {
+                      const totalIn = personalCategories.filter(c => c.type === "income").reduce((s, c) => s + (row[c.id] || 0), 0);
+                      const totalExp = personalCategories.filter(c => c.type === "expense").reduce((s, c) => s + (row[c.id] || 0), 0);
+                      const bal = totalIn - totalExp;
+                      return (<>
+                        <td style={{ textAlign: "right", padding: "10px 12px", color: "#2d4a35", fontWeight: 500, fontFamily: "'Jost', sans-serif", fontSize: 11 }}>{totalIn === 0 ? "—" : fmtFull(totalIn)}</td>
+                        <td style={{ textAlign: "right", padding: "10px 12px", color: "#A63D3D", fontWeight: 500, fontFamily: "'Jost', sans-serif", fontSize: 11 }}>{totalExp === 0 ? "—" : fmtFull(totalExp)}</td>
+                        <td style={{ textAlign: "right", padding: "10px 12px", color: bal < 0 ? "#A63D3D" : "#2d4a35", fontWeight: 500, fontFamily: "'Jost', sans-serif", fontSize: 11 }}>{fmtFull(bal)}</td>
+                      </>);
+                    })()}
                     <td style={{ padding: "10px 12px" }}>
                       <button onClick={() => { setEditingMonthDraft({ ...row }); setEditingMonth(row.period); }} style={{
                         padding: "4px 12px", borderRadius: 100, border: "none", cursor: "pointer",
@@ -694,24 +691,23 @@ export default function BudgetDashboard() {
               <tfoot>
                 <tr style={{ borderTop: "1.5px solid #c8bba5" }}>
                   <td style={{ padding: "10px 12px", fontWeight: 600, color: "#3d2e1e", fontFamily: "'Syne', sans-serif", fontSize: "0.6rem", letterSpacing: "0.08em", textTransform: "uppercase" }}>Totals</td>
-                  {["carryover", "income", "misc"].map(field => (
-                    <td key={field} style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#3d2e1e", fontFamily: "'Jost', sans-serif" }}>
-                      {fmtFull(monthlyBudget.reduce((s, r) => s + (r[field] || 0), 0))}
-                    </td>
-                  ))}
-                  <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#2d4a35", fontFamily: "'Jost', sans-serif" }}>
-                    {fmtFull(monthlyBudget.reduce((s, r) => s + r.totalIncome, 0))}
-                  </td>
                   {personalCategories.map(cat => (
                     <td key={cat.id} style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#3d2e1e", fontFamily: "'Jost', sans-serif" }}>
                       {fmtFull(monthlyBudget.reduce((s, r) => s + (r[cat.id] || 0), 0))}
                     </td>
                   ))}
+                  <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#2d4a35", fontFamily: "'Jost', sans-serif" }}>
+                    {fmtFull(monthlyBudget.reduce((s, r) => s + personalCategories.filter(c => c.type === "income").reduce((si, c) => si + (r[c.id] || 0), 0), 0))}
+                  </td>
                   <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#A63D3D", fontFamily: "'Jost', sans-serif" }}>
-                    {fmtFull(monthlyBudget.reduce((s, r) => s + r.totalExpense, 0))}
+                    {fmtFull(monthlyBudget.reduce((s, r) => s + personalCategories.filter(c => c.type === "expense").reduce((se, c) => se + (r[c.id] || 0), 0), 0))}
                   </td>
                   <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#3d2e1e", fontFamily: "'Jost', sans-serif" }}>
-                    {fmtFull(monthlyBudget.reduce((s, r) => s + r.balance, 0))}
+                    {fmtFull(monthlyBudget.reduce((s, r) => {
+                      const ti = personalCategories.filter(c => c.type === "income").reduce((si, c) => si + (r[c.id] || 0), 0);
+                      const te = personalCategories.filter(c => c.type === "expense").reduce((se, c) => se + (r[c.id] || 0), 0);
+                      return s + (ti - te);
+                    }, 0))}
                   </td>
                   <td></td>
                 </tr>
@@ -943,14 +939,19 @@ export default function BudgetDashboard() {
 
       {editingMonth && editingMonthDraft && (
         <Modal title={editingMonth} onClose={() => { setEditingMonth(null); setEditingMonthDraft(null); }}>
-          <div style={{ fontSize: "0.58rem", color: "#a89070", marginBottom: 8, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Income</div>
-          <Input label="Carryover" value={editingMonthDraft.carryover} onChange={v => setEditingMonthDraft(p => ({ ...p, carryover: v }))} />
-          <Input label="Income" value={editingMonthDraft.income} onChange={v => setEditingMonthDraft(p => ({ ...p, income: v }))} />
-          <Input label="Misc" value={editingMonthDraft.misc} onChange={v => setEditingMonthDraft(p => ({ ...p, misc: v }))} />
-          {personalCategories.length > 0 && (
+          {personalCategories.filter(c => c.type === "income").length > 0 && (
+            <div style={{ fontSize: "0.58rem", color: "#a89070", marginBottom: 8, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Income</div>
+          )}
+          {personalCategories.filter(c => c.type === "income").map(cat => (
+            <Input key={cat.id} label={cat.label}
+              value={editingMonthDraft[cat.id] || 0}
+              onChange={v => setEditingMonthDraft(p => ({ ...p, [cat.id]: v }))}
+            />
+          ))}
+          {personalCategories.filter(c => c.type === "expense").length > 0 && (
             <div style={{ fontSize: "0.58rem", color: "#a89070", margin: "16px 0 10px", textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Expenses</div>
           )}
-          {personalCategories.map(cat => (
+          {personalCategories.filter(c => c.type === "expense").map(cat => (
             <Input key={cat.id} label={cat.label}
               value={editingMonthDraft[cat.id] || 0}
               onChange={v => setEditingMonthDraft(p => ({ ...p, [cat.id]: v }))}
@@ -960,10 +961,8 @@ export default function BudgetDashboard() {
             <Btn variant="secondary" onClick={() => { setEditingMonth(null); setEditingMonthDraft(null); }}>Cancel</Btn>
             <Btn onClick={() => {
               const d = editingMonthDraft;
-              const totalIncome = (d.carryover || 0) + (d.income || 0) + (d.misc || 0);
-              const totalExpense = personalCategories
-                .filter(c => c.type === "expense")
-                .reduce((s, c) => s + (d[c.id] || 0), 0);
+              const totalIncome = personalCategories.filter(c => c.type === "income").reduce((s, c) => s + (d[c.id] || 0), 0);
+              const totalExpense = personalCategories.filter(c => c.type === "expense").reduce((s, c) => s + (d[c.id] || 0), 0);
               setBudget(prev => prev.map(r =>
                 r.period === d.period
                   ? { ...d, totalIncome, totalExpense, balance: totalIncome - totalExpense }
@@ -1005,17 +1004,8 @@ export default function BudgetDashboard() {
       {managingCategories && (
         <Modal title="Manage Categories" onClose={() => setManagingCategories(false)}>
           <div style={{ marginBottom: 4 }}>
-            {/* Fixed income columns — shown as read-only */}
-            {[{ label: "Carryover" }, { label: "Income" }, { label: "Misc" }].map(col => (
-              <div key={col.label} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "0.5px solid #e0d8ca", opacity: 0.6 }}>
-                <div style={{ width: 20 }} />
-                <input value={col.label} disabled style={{ flex: 1, padding: "5px 8px", background: "#ede9df", border: "1px solid #d4c9b0", borderRadius: 6, fontSize: 13, color: "#7a6045", fontFamily: "'Jost', sans-serif", outline: "none" }} />
-                <span style={{ fontSize: "0.58rem", color: "#2d4a35", fontFamily: "'Syne', sans-serif", textTransform: "uppercase", letterSpacing: "0.08em", minWidth: 52 }}>income</span>
-                <div style={{ width: 22 }} />
-              </div>
-            ))}
             {personalCategories.length === 0 && (
-              <div style={{ color: "#a89070", fontSize: 12, padding: "8px 0" }}>No expense categories yet.</div>
+              <div style={{ color: "#a89070", fontSize: 12, padding: "8px 0" }}>No categories yet.</div>
             )}
             {personalCategories.map((cat, idx) => (
               <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "0.5px solid #e0d8ca" }}>
