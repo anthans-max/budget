@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -243,9 +243,9 @@ const Modal = ({ title, onClose, children }) => (
 );
 
 const Input = ({ label, value, onChange, type = "number" }) => {
-  const [display, setDisplay] = React.useState(() => type === "number" ? String(value ?? 0) : value);
-  const focused = React.useRef(false);
-  React.useEffect(() => {
+  const [display, setDisplay] = useState(() => type === "number" ? String(value ?? 0) : value);
+  const focused = useRef(false);
+  useEffect(() => {
     if (!focused.current) setDisplay(type === "number" ? String(value ?? 0) : value);
   }, [value, type]);
   if (type !== "number") {
