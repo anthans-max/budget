@@ -4,6 +4,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend
 } from "recharts";
+import { supabase } from "./supabaseClient";
 
 // ── Real Data from Budget.xlsx ──────────────────────────────
 const initialAccounts = [
@@ -349,21 +350,33 @@ const saveState = (key, value) => {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
 };
 
+const fillMissingMonths = (saved) => {
+  const savedMonths = new Set(saved.map(r => r.period));
+  const missing = monthNames
+    .filter(m => !savedMonths.has(m))
+    .map(m => ({ period: m, carryover: 0, income: 0, misc: 0, totalIncome: 0, mortgage: 0, water: 0, housekeeping: 0, preschool: 0, cash: 0, chase: 0, robinhood: 0, totalExpense: 0, balance: 0 }));
+  if (!missing.length) return saved;
+  return [...saved, ...missing].sort((a, b) => monthNames.indexOf(a.period) - monthNames.indexOf(b.period));
+};
+
+const debounceTimers = {};
+const saveToSupabase = (table, rowId, data) => {
+  if (!supabase) return;
+  clearTimeout(debounceTimers[table]);
+  debounceTimers[table] = setTimeout(async () => {
+    try {
+      await supabase.from(table).upsert({ id: rowId, data }, { onConflict: "id" });
+    } catch { /* localStorage is the safety net */ }
+  }, 1000);
+};
+
 // ═════════════════════════════════════════════════════════════
 // MAIN DASHBOARD
 // ═════════════════════════════════════════════════════════════
 export default function BudgetDashboard() {
   const [tab, setTab] = useState("overview");
   const [accounts, setAccounts] = useState(() => loadState(STORAGE_KEYS.accounts, initialAccounts));
-  const [budget, setBudget] = useState(() => {
-    const saved = loadState(STORAGE_KEYS.budget, initialBudgetData);
-    const savedMonths = new Set(saved.map(r => r.period));
-    const missing = monthNames
-      .filter(m => !savedMonths.has(m))
-      .map(m => ({ period: m, carryover: 0, income: 0, misc: 0, totalIncome: 0, mortgage: 0, water: 0, housekeeping: 0, preschool: 0, cash: 0, chase: 0, robinhood: 0, totalExpense: 0, balance: 0 }));
-    if (!missing.length) return saved;
-    return [...saved, ...missing].sort((a, b) => monthNames.indexOf(a.period) - monthNames.indexOf(b.period));
-  });
+  const [budget, setBudget] = useState(() => fillMissingMonths(loadState(STORAGE_KEYS.budget, initialBudgetData)));
   const [businessBudget, setBusinessBudget] = useState(() => loadState(STORAGE_KEYS.businessBudget, initialBusinessData));
   const [editingAccount, setEditingAccount] = useState(null);
   const [addingAccount, setAddingAccount] = useState(false);
@@ -407,13 +420,46 @@ export default function BudgetDashboard() {
     { id: "robinhood",    label: "Robinhood",  type: "expense" },
   ]));
 
-  // ── Persist to localStorage on change ────────────────────
-  useEffect(() => { saveState(STORAGE_KEYS.accounts, accounts); }, [accounts]);
-  useEffect(() => { saveState(STORAGE_KEYS.budget, budget); }, [budget]);
-  useEffect(() => { saveState(STORAGE_KEYS.businessBudget, businessBudget); }, [businessBudget]);
-  useEffect(() => { saveState(STORAGE_KEYS.personalCategories, personalCategories); }, [personalCategories]);
-  useEffect(() => { saveState(STORAGE_KEYS.businessCategories, businessCategories); }, [businessCategories]);
-  useEffect(() => { saveState(STORAGE_KEYS.businessMonthly, businessMonthly); }, [businessMonthly]);
+  const [supabaseReady, setSupabaseReady] = useState(!supabase);
+
+  // ── Persist to localStorage + Supabase on change ────────
+  useEffect(() => { saveState(STORAGE_KEYS.accounts, accounts); saveToSupabase("budget_accounts", "accounts_v2", accounts); }, [accounts]);
+  useEffect(() => { saveState(STORAGE_KEYS.budget, budget); saveToSupabase("budget_monthly", "monthly_v2", budget); }, [budget]);
+  useEffect(() => { saveState(STORAGE_KEYS.businessBudget, businessBudget); saveToSupabase("business_budget", "business_v2", businessBudget); }, [businessBudget]);
+  useEffect(() => { saveState(STORAGE_KEYS.personalCategories, personalCategories); saveToSupabase("budget_categories", "personal_v3", personalCategories); }, [personalCategories]);
+  useEffect(() => { saveState(STORAGE_KEYS.businessCategories, businessCategories); saveToSupabase("business_categories", "categories_v2", businessCategories); }, [businessCategories]);
+  useEffect(() => { saveState(STORAGE_KEYS.businessMonthly, businessMonthly); saveToSupabase("business_monthly", "monthly_v2", businessMonthly); }, [businessMonthly]);
+
+  // ── Load from Supabase on mount ─────────────────────────
+  useEffect(() => {
+    if (!supabase) return;
+    let cancelled = false;
+    const SUPABASE_MAP = [
+      { table: "budget_accounts",    rowId: "accounts_v2",   setter: setAccounts,           transform: null },
+      { table: "budget_monthly",     rowId: "monthly_v2",    setter: setBudget,             transform: fillMissingMonths },
+      { table: "budget_categories",  rowId: "personal_v3",   setter: setPersonalCategories,  transform: null },
+      { table: "business_budget",    rowId: "business_v2",   setter: setBusinessBudget,      transform: null },
+      { table: "business_categories",rowId: "categories_v2", setter: setBusinessCategories,  transform: null },
+      { table: "business_monthly",   rowId: "monthly_v2",    setter: setBusinessMonthly,     transform: null },
+    ];
+    Promise.allSettled(
+      SUPABASE_MAP.map(({ table, rowId }) =>
+        supabase.from(table).select("data").eq("id", rowId).single()
+      )
+    ).then(results => {
+      if (cancelled) return;
+      results.forEach((result, i) => {
+        const { setter, transform } = SUPABASE_MAP[i];
+        if (result.status === "fulfilled" && result.value.data?.data != null) {
+          const raw = result.value.data.data;
+          setter(transform ? transform(raw) : raw);
+        }
+      });
+    }).catch(() => {}).finally(() => {
+      if (!cancelled) setSupabaseReady(true);
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   // ── Derived Data ─────────────────────────────────────────
   const totalDebt = useMemo(() =>
@@ -509,6 +555,16 @@ export default function BudgetDashboard() {
       minHeight: "100vh", background: "#faf7f2",
       color: "#3d2e1e", fontFamily: "'Jost', sans-serif",
     }}>
+      {!supabaseReady && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9999,
+          background: "#faf7f2",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "#7a6045", fontSize: 18
+        }}>
+          Loading…
+        </div>
+      )}
       {/* Header */}
       <div style={{
         background: "#faf7f2", borderBottom: "1px solid #e0d8ca",
