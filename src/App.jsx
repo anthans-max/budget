@@ -710,7 +710,7 @@ export default function BudgetDashboard() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: Math.max(900, 300 + personalCategories.length * 100) }}>
               <thead>
                 <tr>
-                  {["Period", ...personalCategories.map(c => c.label), "Total In", "Total Exp", "Balance", ""].map((h, hi, arr) => (
+                  {["Period", ...personalCategories.filter(c => c.type === "income").map(c => c.label), "Total In", ...personalCategories.filter(c => c.type === "expense").map(c => c.label), "Total Exp", "Balance", ""].map((h, hi, arr) => (
                     <th key={`${h}-${hi}`} style={{
                       textAlign: h === "Period" || h === "" ? "left" : "right",
                       padding: "8px 12px", background: "rgba(212,201,176,0.3)",
@@ -726,22 +726,19 @@ export default function BudgetDashboard() {
                 {monthlyBudget.map((row, i) => (
                   <tr key={i} style={{ borderBottom: "0.5px solid #e0d8ca" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(212,201,176,0.12)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                     <td style={{ padding: "10px 12px", color: "#3d2e1e", fontWeight: 500 }}>{row.period}</td>
-                    {personalCategories.map(cat => {
-                      const val = row[cat.id] || 0;
-                      return (
-                        <td key={cat.id} style={{ textAlign: "right", padding: "10px 12px", color: "#7a6045", fontFamily: "'Jost', sans-serif", fontSize: 11 }}>
-                          {val === 0 ? "—" : fmtFull(val)}
-                        </td>
-                      );
-                    })}
                     {(() => {
-                      const totalIn = personalCategories.filter(c => c.type === "income").reduce((s, c) => s + (row[c.id] || 0), 0);
-                      const totalExp = personalCategories.filter(c => c.type === "expense").reduce((s, c) => s + (row[c.id] || 0), 0);
+                      const incCats = personalCategories.filter(c => c.type === "income");
+                      const expCats = personalCategories.filter(c => c.type === "expense");
+                      const totalIn = incCats.reduce((s, c) => s + (row[c.id] || 0), 0);
+                      const totalExp = expCats.reduce((s, c) => s + (row[c.id] || 0), 0);
                       const bal = totalIn - totalExp;
+                      const cellStyle = { textAlign: "right", padding: "10px 12px", color: "#7a6045", fontFamily: "'Jost', sans-serif", fontSize: 11 };
                       return (<>
-                        <td style={{ textAlign: "right", padding: "10px 12px", color: "#2d4a35", fontWeight: 500, fontFamily: "'Jost', sans-serif", fontSize: 11 }}>{totalIn === 0 ? "—" : fmtFull(totalIn)}</td>
-                        <td style={{ textAlign: "right", padding: "10px 12px", color: "#A63D3D", fontWeight: 500, fontFamily: "'Jost', sans-serif", fontSize: 11 }}>{totalExp === 0 ? "—" : fmtFull(totalExp)}</td>
-                        <td style={{ textAlign: "right", padding: "10px 12px", color: bal < 0 ? "#A63D3D" : "#2d4a35", fontWeight: 500, fontFamily: "'Jost', sans-serif", fontSize: 11 }}>{fmtFull(bal)}</td>
+                        {incCats.map(cat => <td key={cat.id} style={cellStyle}>{(row[cat.id] || 0) === 0 ? "—" : fmtFull(row[cat.id])}</td>)}
+                        <td style={{ ...cellStyle, color: "#2d4a35", fontWeight: 500 }}>{totalIn === 0 ? "—" : fmtFull(totalIn)}</td>
+                        {expCats.map(cat => <td key={cat.id} style={cellStyle}>{(row[cat.id] || 0) === 0 ? "—" : fmtFull(row[cat.id])}</td>)}
+                        <td style={{ ...cellStyle, color: "#A63D3D", fontWeight: 500 }}>{totalExp === 0 ? "—" : fmtFull(totalExp)}</td>
+                        <td style={{ ...cellStyle, color: bal < 0 ? "#A63D3D" : "#2d4a35", fontWeight: 500 }}>{fmtFull(bal)}</td>
                       </>);
                     })()}
                     <td style={{ padding: "10px 12px" }}>
@@ -757,7 +754,7 @@ export default function BudgetDashboard() {
               <tfoot>
                 <tr style={{ borderTop: "1.5px solid #c8bba5" }}>
                   <td style={{ padding: "10px 12px", fontWeight: 600, color: "#3d2e1e", fontFamily: "'Syne', sans-serif", fontSize: "0.6rem", letterSpacing: "0.08em", textTransform: "uppercase" }}>Totals</td>
-                  {personalCategories.map(cat => (
+                  {personalCategories.filter(c => c.type === "income").map(cat => (
                     <td key={cat.id} style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#3d2e1e", fontFamily: "'Jost', sans-serif" }}>
                       {fmtFull(monthlyBudget.reduce((s, r) => s + (r[cat.id] || 0), 0))}
                     </td>
@@ -765,6 +762,11 @@ export default function BudgetDashboard() {
                   <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#2d4a35", fontFamily: "'Jost', sans-serif" }}>
                     {fmtFull(monthlyBudget.reduce((s, r) => s + personalCategories.filter(c => c.type === "income").reduce((si, c) => si + (r[c.id] || 0), 0), 0))}
                   </td>
+                  {personalCategories.filter(c => c.type === "expense").map(cat => (
+                    <td key={cat.id} style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#3d2e1e", fontFamily: "'Jost', sans-serif" }}>
+                      {fmtFull(monthlyBudget.reduce((s, r) => s + (r[cat.id] || 0), 0))}
+                    </td>
+                  ))}
                   <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#A63D3D", fontFamily: "'Jost', sans-serif" }}>
                     {fmtFull(monthlyBudget.reduce((s, r) => s + personalCategories.filter(c => c.type === "expense").reduce((se, c) => se + (r[c.id] || 0), 0), 0))}
                   </td>
