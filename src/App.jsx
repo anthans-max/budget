@@ -6,6 +6,15 @@ import {
 } from "recharts";
 import { supabase } from "./supabaseClient";
 
+const SUPABASE_ROW_IDS = {
+  accounts:           "a1000000-0000-0000-0000-000000000001",
+  budget_monthly:     "a1000000-0000-0000-0000-000000000002",
+  budget_categories:  "a1000000-0000-0000-0000-000000000003",
+  business_budget:    "a1000000-0000-0000-0000-000000000004",
+  business_categories:"a1000000-0000-0000-0000-000000000005",
+  business_monthly:   "a1000000-0000-0000-0000-000000000006",
+};
+
 // ── Real Data from Budget.xlsx ──────────────────────────────
 const initialAccounts = [
   { id: 1, name: "Chase Sapphire", type: "Credit Card", balance: 0, lastUpdated: "2026-03-29" },
@@ -423,24 +432,24 @@ export default function BudgetDashboard() {
   const [supabaseReady, setSupabaseReady] = useState(!supabase);
 
   // ── Persist to localStorage + Supabase on change ────────
-  useEffect(() => { saveState(STORAGE_KEYS.accounts, accounts); saveToSupabase("budget_accounts", "accounts_v2", accounts); }, [accounts]);
-  useEffect(() => { saveState(STORAGE_KEYS.budget, budget); saveToSupabase("budget_monthly", "monthly_v2", budget); }, [budget]);
-  useEffect(() => { saveState(STORAGE_KEYS.businessBudget, businessBudget); saveToSupabase("business_budget", "business_v2", businessBudget); }, [businessBudget]);
-  useEffect(() => { saveState(STORAGE_KEYS.personalCategories, personalCategories); saveToSupabase("budget_categories", "personal_v3", personalCategories); }, [personalCategories]);
-  useEffect(() => { saveState(STORAGE_KEYS.businessCategories, businessCategories); saveToSupabase("business_categories", "categories_v2", businessCategories); }, [businessCategories]);
-  useEffect(() => { saveState(STORAGE_KEYS.businessMonthly, businessMonthly); saveToSupabase("business_monthly", "monthly_v2", businessMonthly); }, [businessMonthly]);
+  useEffect(() => { saveState(STORAGE_KEYS.accounts, accounts); saveToSupabase("budget_accounts", SUPABASE_ROW_IDS.accounts, accounts); }, [accounts]);
+  useEffect(() => { saveState(STORAGE_KEYS.budget, budget); saveToSupabase("budget_monthly", SUPABASE_ROW_IDS.budget_monthly, budget); }, [budget]);
+  useEffect(() => { saveState(STORAGE_KEYS.businessBudget, businessBudget); saveToSupabase("business_budget", SUPABASE_ROW_IDS.business_budget, businessBudget); }, [businessBudget]);
+  useEffect(() => { saveState(STORAGE_KEYS.personalCategories, personalCategories); saveToSupabase("budget_categories", SUPABASE_ROW_IDS.budget_categories, personalCategories); }, [personalCategories]);
+  useEffect(() => { saveState(STORAGE_KEYS.businessCategories, businessCategories); saveToSupabase("business_categories", SUPABASE_ROW_IDS.business_categories, businessCategories); }, [businessCategories]);
+  useEffect(() => { saveState(STORAGE_KEYS.businessMonthly, businessMonthly); saveToSupabase("business_monthly", SUPABASE_ROW_IDS.business_monthly, businessMonthly); }, [businessMonthly]);
 
   // ── Load from Supabase on mount ─────────────────────────
   useEffect(() => {
     if (!supabase) return;
     let cancelled = false;
     const SUPABASE_MAP = [
-      { table: "budget_accounts",    rowId: "accounts_v2",   setter: setAccounts,           transform: null },
-      { table: "budget_monthly",     rowId: "monthly_v2",    setter: setBudget,             transform: fillMissingMonths },
-      { table: "budget_categories",  rowId: "personal_v3",   setter: setPersonalCategories,  transform: null },
-      { table: "business_budget",    rowId: "business_v2",   setter: setBusinessBudget,      transform: null },
-      { table: "business_categories",rowId: "categories_v2", setter: setBusinessCategories,  transform: null },
-      { table: "business_monthly",   rowId: "monthly_v2",    setter: setBusinessMonthly,     transform: null },
+      { table: "budget_accounts",    rowId: SUPABASE_ROW_IDS.accounts,            setter: setAccounts,           transform: null },
+      { table: "budget_monthly",     rowId: SUPABASE_ROW_IDS.budget_monthly,     setter: setBudget,             transform: fillMissingMonths },
+      { table: "budget_categories",  rowId: SUPABASE_ROW_IDS.budget_categories,  setter: setPersonalCategories,  transform: null },
+      { table: "business_budget",    rowId: SUPABASE_ROW_IDS.business_budget,    setter: setBusinessBudget,      transform: null },
+      { table: "business_categories",rowId: SUPABASE_ROW_IDS.business_categories,setter: setBusinessCategories,  transform: null },
+      { table: "business_monthly",   rowId: SUPABASE_ROW_IDS.business_monthly,   setter: setBusinessMonthly,     transform: null },
     ];
     Promise.allSettled(
       SUPABASE_MAP.map(({ table, rowId }) =>
@@ -796,7 +805,7 @@ export default function BudgetDashboard() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: Math.max(900, 300 + businessCategories.length * 100) }}>
               <thead>
                 <tr>
-                  {["Period", ...businessCategories.map(c => c.label), "Total In", "Total Exp", "Balance", ""].map((h, hi, arr) => (
+                  {["Period", ...businessCategories.filter(c => c.type === "income").map(c => c.label), "Total In", ...businessCategories.filter(c => c.type === "expense").map(c => c.label), "Total Exp", "Balance", ""].map((h, hi, arr) => (
                     <th key={`${h}-${hi}`} style={{
                       textAlign: h === "Period" || h === "" ? "left" : "right",
                       padding: "8px 12px", background: "rgba(212,201,176,0.3)",
@@ -811,22 +820,19 @@ export default function BudgetDashboard() {
                 {businessMonthly.map((row, i) => (
                   <tr key={i} style={{ borderBottom: "0.5px solid #e0d8ca" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(212,201,176,0.12)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                     <td style={{ padding: "10px 12px", color: "#3d2e1e", fontWeight: 500 }}>{row.period}</td>
-                    {businessCategories.map(cat => {
-                      const val = row[cat.id] || 0;
-                      return (
-                        <td key={cat.id} style={{ textAlign: "right", padding: "10px 12px", color: "#7a6045", fontFamily: "'Jost', sans-serif", fontSize: 11 }}>
-                          {val === 0 ? "—" : fmtFull(val)}
-                        </td>
-                      );
-                    })}
                     {(() => {
-                      const totalIn = businessCategories.filter(c => c.type === "income").reduce((s, c) => s + (row[c.id] || 0), 0);
-                      const totalExp = businessCategories.filter(c => c.type === "expense").reduce((s, c) => s + (row[c.id] || 0), 0);
+                      const incCats = businessCategories.filter(c => c.type === "income");
+                      const expCats = businessCategories.filter(c => c.type === "expense");
+                      const totalIn = incCats.reduce((s, c) => s + (row[c.id] || 0), 0);
+                      const totalExp = expCats.reduce((s, c) => s + (row[c.id] || 0), 0);
                       const bal = totalIn - totalExp;
+                      const cellStyle = { textAlign: "right", padding: "10px 12px", color: "#7a6045", fontFamily: "'Jost', sans-serif", fontSize: 11 };
                       return (<>
-                        <td style={{ textAlign: "right", padding: "10px 12px", color: "#2d4a35", fontWeight: 500, fontFamily: "'Jost', sans-serif", fontSize: 11 }}>{totalIn === 0 ? "—" : fmtFull(totalIn)}</td>
-                        <td style={{ textAlign: "right", padding: "10px 12px", color: "#A63D3D", fontWeight: 500, fontFamily: "'Jost', sans-serif", fontSize: 11 }}>{totalExp === 0 ? "—" : fmtFull(totalExp)}</td>
-                        <td style={{ textAlign: "right", padding: "10px 12px", color: bal < 0 ? "#A63D3D" : "#2d4a35", fontWeight: 500, fontFamily: "'Jost', sans-serif", fontSize: 11 }}>{fmtFull(bal)}</td>
+                        {incCats.map(cat => <td key={cat.id} style={cellStyle}>{(row[cat.id] || 0) === 0 ? "—" : fmtFull(row[cat.id])}</td>)}
+                        <td style={{ ...cellStyle, color: "#2d4a35", fontWeight: 500 }}>{totalIn === 0 ? "—" : fmtFull(totalIn)}</td>
+                        {expCats.map(cat => <td key={cat.id} style={cellStyle}>{(row[cat.id] || 0) === 0 ? "—" : fmtFull(row[cat.id])}</td>)}
+                        <td style={{ ...cellStyle, color: "#A63D3D", fontWeight: 500 }}>{totalExp === 0 ? "—" : fmtFull(totalExp)}</td>
+                        <td style={{ ...cellStyle, color: bal < 0 ? "#A63D3D" : "#2d4a35", fontWeight: 500 }}>{fmtFull(bal)}</td>
                       </>);
                     })()}
                     <td style={{ padding: "10px 12px" }}>
@@ -842,7 +848,7 @@ export default function BudgetDashboard() {
               <tfoot>
                 <tr style={{ borderTop: "1.5px solid #c8bba5" }}>
                   <td style={{ padding: "10px 12px", fontWeight: 600, color: "#3d2e1e", fontFamily: "'Syne', sans-serif", fontSize: "0.6rem", letterSpacing: "0.08em", textTransform: "uppercase" }}>Totals</td>
-                  {businessCategories.map(cat => (
+                  {businessCategories.filter(c => c.type === "income").map(cat => (
                     <td key={cat.id} style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#3d2e1e", fontFamily: "'Jost', sans-serif" }}>
                       {fmtFull(businessMonthly.reduce((s, r) => s + (r[cat.id] || 0), 0))}
                     </td>
@@ -850,6 +856,11 @@ export default function BudgetDashboard() {
                   <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#2d4a35", fontFamily: "'Jost', sans-serif" }}>
                     {fmtFull(businessMonthly.reduce((s, r) => s + businessCategories.filter(c => c.type === "income").reduce((si, c) => si + (r[c.id] || 0), 0), 0))}
                   </td>
+                  {businessCategories.filter(c => c.type === "expense").map(cat => (
+                    <td key={cat.id} style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#3d2e1e", fontFamily: "'Jost', sans-serif" }}>
+                      {fmtFull(businessMonthly.reduce((s, r) => s + (r[cat.id] || 0), 0))}
+                    </td>
+                  ))}
                   <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#A63D3D", fontFamily: "'Jost', sans-serif" }}>
                     {fmtFull(businessMonthly.reduce((s, r) => s + businessCategories.filter(c => c.type === "expense").reduce((se, c) => se + (r[c.id] || 0), 0), 0))}
                   </td>
