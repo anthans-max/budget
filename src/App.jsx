@@ -430,14 +430,15 @@ export default function BudgetDashboard() {
   ]);
 
   const [supabaseReady, setSupabaseReady] = useState(!supabase);
+  const initialLoadDone = useRef(false);
 
   // ── Persist to localStorage + Supabase on change ────────
-  useEffect(() => { saveState(STORAGE_KEYS.accounts, accounts); saveToSupabase("budget_accounts", SUPABASE_ROW_IDS.accounts, accounts); }, [accounts]);
-  useEffect(() => { saveState(STORAGE_KEYS.budget, budget); saveToSupabase("budget_monthly", SUPABASE_ROW_IDS.budget_monthly, budget); }, [budget]);
-  useEffect(() => { saveState(STORAGE_KEYS.businessBudget, businessBudget); saveToSupabase("business_budget", SUPABASE_ROW_IDS.business_budget, businessBudget); }, [businessBudget]);
-  useEffect(() => { saveState(STORAGE_KEYS.personalCategories, personalCategories); saveToSupabase("budget_categories", SUPABASE_ROW_IDS.budget_categories, personalCategories); }, [personalCategories]);
-  useEffect(() => { saveState(STORAGE_KEYS.businessCategories, businessCategories); saveToSupabase("business_categories", SUPABASE_ROW_IDS.business_categories, businessCategories); }, [businessCategories]);
-  useEffect(() => { saveState(STORAGE_KEYS.businessMonthly, businessMonthly); saveToSupabase("business_monthly", SUPABASE_ROW_IDS.business_monthly, businessMonthly); }, [businessMonthly]);
+  useEffect(() => { saveState(STORAGE_KEYS.accounts, accounts); if (initialLoadDone.current) saveToSupabase("budget_accounts", SUPABASE_ROW_IDS.accounts, accounts); }, [accounts]);
+  useEffect(() => { saveState(STORAGE_KEYS.budget, budget); if (initialLoadDone.current) saveToSupabase("budget_monthly", SUPABASE_ROW_IDS.budget_monthly, budget); }, [budget]);
+  useEffect(() => { saveState(STORAGE_KEYS.businessBudget, businessBudget); if (initialLoadDone.current) saveToSupabase("business_budget", SUPABASE_ROW_IDS.business_budget, businessBudget); }, [businessBudget]);
+  useEffect(() => { saveState(STORAGE_KEYS.personalCategories, personalCategories); if (initialLoadDone.current) saveToSupabase("budget_categories", SUPABASE_ROW_IDS.budget_categories, personalCategories); }, [personalCategories]);
+  useEffect(() => { saveState(STORAGE_KEYS.businessCategories, businessCategories); if (initialLoadDone.current) saveToSupabase("business_categories", SUPABASE_ROW_IDS.business_categories, businessCategories); }, [businessCategories]);
+  useEffect(() => { saveState(STORAGE_KEYS.businessMonthly, businessMonthly); if (initialLoadDone.current) saveToSupabase("business_monthly", SUPABASE_ROW_IDS.business_monthly, businessMonthly); }, [businessMonthly]);
 
   // ── Load from Supabase on mount ─────────────────────────
   useEffect(() => {
@@ -465,7 +466,7 @@ export default function BudgetDashboard() {
         }
       });
     }).catch(() => {}).finally(() => {
-      if (!cancelled) setSupabaseReady(true);
+      if (!cancelled) { initialLoadDone.current = true; setSupabaseReady(true); }
     });
     return () => { cancelled = true; };
   }, []);
