@@ -336,7 +336,7 @@ const Btn = ({ onClick, children, variant = "primary", style = {} }) => (
 );
 
 // ── localStorage helpers ─────────────────────────────────────
-const STORAGE_KEYS = { accounts: "budget_accounts", budget: "budget_data_monthly", netWorth: "budget_networth", businessBudget: "business_budget", personalCategories: "personal_categories_v3", businessCategories: "business_categories_v1", businessMonthly: "business_monthly_v1" };
+const STORAGE_KEYS = { accounts: "budget_accounts_v2", budget: "budget_data_monthly_v2", netWorth: "budget_networth", businessBudget: "business_budget_v2", personalCategories: "personal_categories_v3", businessCategories: "business_categories_v2", businessMonthly: "business_monthly_v2" };
 
 const loadState = (key, fallback) => {
   try {
