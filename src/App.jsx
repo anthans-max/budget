@@ -384,9 +384,9 @@ const saveToSupabase = (table, rowId, data) => {
 // ═════════════════════════════════════════════════════════════
 export default function BudgetDashboard() {
   const [tab, setTab] = useState("overview");
-  const [accounts, setAccounts] = useState(() => loadState(STORAGE_KEYS.accounts, initialAccounts));
-  const [budget, setBudget] = useState(() => fillMissingMonths(loadState(STORAGE_KEYS.budget, initialBudgetData)));
-  const [businessBudget, setBusinessBudget] = useState(() => loadState(STORAGE_KEYS.businessBudget, initialBusinessData));
+  const [accounts, setAccounts] = useState(initialAccounts);
+  const [budget, setBudget] = useState(() => fillMissingMonths(initialBudgetData));
+  const [businessBudget, setBusinessBudget] = useState(initialBusinessData);
   const [editingAccount, setEditingAccount] = useState(null);
   const [addingAccount, setAddingAccount] = useState(false);
   const [newAccount, setNewAccount] = useState({ name: "", type: "Checking", balance: 0 });
@@ -400,7 +400,7 @@ export default function BudgetDashboard() {
   const [newBizCategoryForm, setNewBizCategoryForm] = useState({ label: "", type: "expense" });
   const [editingBizMonth, setEditingBizMonth] = useState(null);
   const [editingBizMonthDraft, setEditingBizMonthDraft] = useState(null);
-  const [businessCategories, setBusinessCategories] = useState(() => loadState(STORAGE_KEYS.businessCategories, [
+  const [businessCategories, setBusinessCategories] = useState([
     { id: "carryover",       label: "Carryover",  type: "income"  },
     { id: "consulting",      label: "Consulting", type: "income"  },
     { id: "sunderMed",       label: "SunderMed",  type: "income"  },
@@ -414,9 +414,9 @@ export default function BudgetDashboard() {
     { id: "chase",           label: "Chase",      type: "expense" },
     { id: "misc",            label: "Misc",       type: "expense" },
     { id: "capitalOne",      label: "Cap One",    type: "expense" },
-  ]));
-  const [businessMonthly, setBusinessMonthly] = useState(() => loadState(STORAGE_KEYS.businessMonthly, initialMonthlyBusinessData));
-  const [personalCategories, setPersonalCategories] = useState(() => loadState(STORAGE_KEYS.personalCategories, [
+  ]);
+  const [businessMonthly, setBusinessMonthly] = useState(initialMonthlyBusinessData);
+  const [personalCategories, setPersonalCategories] = useState([
     { id: "carryover",    label: "Carryover",  type: "income"  },
     { id: "income",       label: "Income",     type: "income"  },
     { id: "misc",         label: "Misc",       type: "income"  },
@@ -427,7 +427,7 @@ export default function BudgetDashboard() {
     { id: "cash",         label: "Cash",        type: "expense" },
     { id: "chase",        label: "Chase",       type: "expense" },
     { id: "robinhood",    label: "Robinhood",  type: "expense" },
-  ]));
+  ]);
 
   const [supabaseReady, setSupabaseReady] = useState(!supabase);
 
