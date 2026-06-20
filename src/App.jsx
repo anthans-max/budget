@@ -269,7 +269,7 @@ const cellInputStyle = { background: "#fff", border: `1px solid ${T.green}`, pad
 
 // Numeric input for an inline table cell. Reports a Number via onChange;
 // reuses the comma-formatting/paste-sanitizing behavior of <Input>.
-const CellInput = ({ value, onChange, onKeyDown, onBlur, autoFocus }) => {
+const CellInput = ({ value, onChange, onKeyDown, onBlur, onFocus, autoFocus }) => {
   const [display, setDisplay] = useState(() => formatComma(String(value ?? 0)));
   const focused = useRef(false);
   useEffect(() => {
@@ -281,7 +281,7 @@ const CellInput = ({ value, onChange, onKeyDown, onBlur, autoFocus }) => {
       inputMode="decimal"
       autoFocus={autoFocus}
       value={display}
-      onFocus={e => { focused.current = true; e.target.select(); }}
+      onFocus={e => { focused.current = true; e.target.select(); onFocus?.(e); }}
       onPaste={e => {
         e.preventDefault();
         const pasted = e.clipboardData.getData("text").replace(/[$,\s]/g, "");
@@ -315,6 +315,8 @@ export default function BudgetDashboard() {
   const [editingAccount, setEditingAccount] = useState(null);
   const [editingBalance, setEditingBalance] = useState(null); // { accountId, draft: string }
   const balanceCancelRef = useRef(false);
+  const balanceTabRef = useRef(false); // suppress blur-save while Tab-navigating between balance cells
+  const cellTabRef = useRef(false); // suppress blur-commit while Tab-navigating between budget cells
   const [addingAccount, setAddingAccount] = useState(false);
   const [newAccount, setNewAccount] = useState({ name: "", type: "Checking", balance: 0 });
   const [overviewRange, setOverviewRange] = useState("ytd");
@@ -445,6 +447,21 @@ export default function BudgetDashboard() {
     setEditingBalance(null);
   };
 
+  // Accounts in Balances display order (groups in order, accounts within each).
+  const orderedAccounts = BALANCE_GROUPS.flatMap(g => safeAccounts.filter(a => g.types.includes(a.type)));
+
+  // Tab between balance cells: save current, open the next/prev account's cell.
+  const tabBalance = (a, dir) => {
+    if (!editingBalance) return;
+    const num = parseFloat(editingBalance.draft.replace(/,/g, ""));
+    updateAccount({ ...a, balance: isNaN(num) ? 0 : num });
+    const idx = orderedAccounts.findIndex(x => x.id === a.id);
+    if (idx === -1 || orderedAccounts.length === 0) { setEditingBalance(null); return; }
+    const next = orderedAccounts[(idx + dir + orderedAccounts.length) % orderedAccounts.length];
+    balanceTabRef.current = true;
+    setEditingBalance({ accountId: next.id, draft: formatComma(String(next.balance)) });
+  };
+
   const addAccount = useCallback(() => {
     setAccounts(prev => [...prev, {
       id: Math.max(...prev.map(a => a.id)) + 1,
@@ -529,6 +546,26 @@ export default function BudgetDashboard() {
       setEditingCell(null);
     };
 
+    // Editable cells in column order: income rows then expense rows, top to bottom.
+    const orderedFields = [...incCats, ...expCats].map(c => c.id);
+
+    // Tab between cells: save current, then move down a column, wrapping to the
+    // top of the next month column at the bottom (Shift+Tab reverses).
+    const tabCell = (dir) => {
+      if (!editingCell) return;
+      const { monthIndex, field } = editingCell;
+      const base = rows[monthIndex];
+      if (base) saveCell({ ...base, [field]: editingCell.value });
+      const fi = orderedFields.indexOf(field);
+      let nextIdx = fi + dir;
+      let nextMonth = monthIndex;
+      if (nextIdx >= orderedFields.length) { nextIdx = 0; nextMonth = (monthIndex + 1) % rows.length; }
+      else if (nextIdx < 0) { nextIdx = orderedFields.length - 1; nextMonth = (monthIndex - 1 + rows.length) % rows.length; }
+      const nextField = orderedFields[nextIdx];
+      cellTabRef.current = true;
+      setEditingCell({ table: tableKey, monthIndex: nextMonth, field: nextField, value: rows[nextMonth]?.[nextField] || 0 });
+    };
+
     const ZEBRA = "#f7f5ef";
     const headerCell = { padding: "10px 12px", background: HEADER_BG, fontWeight: 600, fontSize: 12, whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.14em", fontFamily: T.fontSans };
     const dataCell = { textAlign: "right", padding: "12px 10px", minWidth: 90, fontFamily: T.fontSans, fontSize: 15 };
@@ -564,11 +601,13 @@ export default function BudgetDashboard() {
                     value={editingCell.value}
                     autoFocus
                     onChange={v => setEditingCell(c => ({ ...c, value: v }))}
+                    onFocus={() => { cellTabRef.current = false; }}
                     onKeyDown={e => {
                       if (e.key === "Enter") { e.preventDefault(); commit(); }
                       else if (e.key === "Escape") { e.preventDefault(); setEditingCell(null); }
+                      else if (e.key === "Tab") { e.preventDefault(); tabCell(e.shiftKey ? -1 : 1); }
                     }}
-                    onBlur={commit}
+                    onBlur={() => { if (cellTabRef.current) return; commit(); }}
                   />
                 </td>
               );
@@ -915,6 +954,7 @@ export default function BudgetDashboard() {
                               letterSpacing: "0.08em", textTransform: "uppercase",
                               background: badge.bg, color: badge.color,
                             }}>{a.type}</span>
+                            <span style={{ fontSize: 12, color: T.faint, marginLeft: 10, fontFamily: T.fontSans }}>{a.lastUpdated}</span>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: isMobile ? "space-between" : "flex-end", gap: 16, width: isMobile ? "100%" : "auto" }}>
                             <div style={{ textAlign: isMobile ? "left" : "right" }}>
@@ -924,7 +964,7 @@ export default function BudgetDashboard() {
                                   type="text"
                                   inputMode="decimal"
                                   value={editingBalance.draft}
-                                  onFocus={e => e.target.select()}
+                                  onFocus={e => { balanceTabRef.current = false; e.target.select(); }}
                                   onChange={e => {
                                     const raw = e.target.value.replace(/,/g, "");
                                     if (raw === "" || /^-?\d*\.?\d*$/.test(raw)) setEditingBalance({ accountId: a.id, draft: formatComma(raw) });
@@ -932,8 +972,10 @@ export default function BudgetDashboard() {
                                   onKeyDown={e => {
                                     if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); }
                                     else if (e.key === "Escape") { e.preventDefault(); balanceCancelRef.current = true; e.currentTarget.blur(); }
+                                    else if (e.key === "Tab") { e.preventDefault(); tabBalance(a, e.shiftKey ? -1 : 1); }
                                   }}
                                   onBlur={() => {
+                                    if (balanceTabRef.current) { return; }
                                     if (balanceCancelRef.current) { balanceCancelRef.current = false; setEditingBalance(null); return; }
                                     saveBalance(a);
                                   }}
@@ -947,7 +989,6 @@ export default function BudgetDashboard() {
                                   style={{ display: "inline-block", fontFamily: T.fontSans, fontWeight: 500, fontSize: 15, color: isDebt && a.balance > 0 ? T.red : T.dark, cursor: "pointer", borderBottom: "1px solid transparent" }}
                                 >{fmtFull(a.balance)}</div>
                               )}
-                              <div style={{ fontSize: 13, color: T.faint, fontFamily: T.fontSans }}>{a.lastUpdated}</div>
                             </div>
                             <div style={{ display: "flex", gap: 6 }}>
                               <button onClick={() => removeAccount(a.id)} style={removeBtnStyle}>Remove</button>
