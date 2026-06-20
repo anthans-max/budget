@@ -254,7 +254,7 @@ export default function BudgetDashboard() {
   const [addingAccount, setAddingAccount] = useState(false);
   const [newAccount, setNewAccount] = useState({ name: "", type: "Checking", balance: 0 });
   const [overviewRange, setOverviewRange] = useState("ytd");
-  const [overviewMonth, setOverviewMonth] = useState("March");
+  const [overviewMonth, setOverviewMonth] = useState(monthNames[new Date().getMonth()]);
   const [editingMonth, setEditingMonth] = useState(null);
   const [editingMonthDraft, setEditingMonthDraft] = useState(null);
   const [managingCategories, setManagingCategories] = useState(false);
@@ -302,25 +302,26 @@ export default function BudgetDashboard() {
   const totalExpenseAll = useMemo(() => safeBudget.reduce((s, b) => s + b.totalExpense, 0), [safeBudget]);
   const latestBalance = safeBudget.length > 0 ? safeBudget[safeBudget.length - 1].balance : 0;
 
-  const expenseBreakdown = useMemo(() => {
-    const expCats = safePersonalCategories.filter(c => c.type === "expense");
-    const totals = {};
-    expCats.forEach(c => { totals[c.label] = 0; });
-    safeBudget.forEach(b => expCats.forEach(c => { totals[c.label] = (totals[c.label] || 0) + (b[c.id] || 0); }));
-    return Object.entries(totals).filter(([, v]) => v > 0).map(([name, value]) => ({ name, value }));
-  }, [safeBudget, safePersonalCategories]);
-
   const netWorthPie = useMemo(() =>
     netWorthItems.filter(i => i.value > 0).map(i => ({ ...i })), []);
 
   const MONTH_ORDER = monthNames;
-  const CURRENT_MONTH_IDX = 2; // March 2026
+  const CURRENT_MONTH_IDX = new Date().getMonth(); // 0-indexed current calendar month (e.g. June = 5)
   const monthlyBudget = safeBudget;
 
+  // ── Dynamic date-range labels ─────────────────────────────
+  const monthAbbr = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const currentYear = new Date().getFullYear();
+  const ytdLabel = `Jan – ${monthAbbr[CURRENT_MONTH_IDX]} ${currentYear}`;
+  const monthLabel = `${monthAbbr[MONTH_ORDER.indexOf(overviewMonth)] || ""} ${currentYear}`;
+
   const overviewData = useMemo(() => {
+    // YTD = Jan through the current calendar month inclusive (months 0..CURRENT_MONTH_IDX).
+    // monthlyBudget always carries all 12 months (zero-filled), so empty months render as 0
+    // rather than being omitted — that's what kept the chart from stopping early.
     if (overviewRange === "ytd") return monthlyBudget.filter((_, i) => i <= CURRENT_MONTH_IDX);
     if (overviewRange === "month") return monthlyBudget.filter(r => r.period === overviewMonth);
-    return monthlyBudget;
+    return monthlyBudget; // Full Year — all 12 months
   }, [overviewRange, overviewMonth, monthlyBudget]);
   const overviewIncome = useMemo(() => {
     const incCats = safePersonalCategories.filter(c => c.type === "income");
@@ -330,6 +331,22 @@ export default function BudgetDashboard() {
     const expCats = safePersonalCategories.filter(c => c.type === "expense");
     return overviewData.reduce((s, r) => s + expCats.reduce((se, c) => se + (r[c.id] || 0), 0), 0);
   }, [overviewData, safePersonalCategories]);
+
+  // Expense breakdown donut — reflects the selected range (YTD = Jan–current month).
+  const expenseBreakdown = useMemo(() => {
+    const expCats = safePersonalCategories.filter(c => c.type === "expense");
+    const totals = {};
+    expCats.forEach(c => { totals[c.label] = 0; });
+    overviewData.forEach(b => expCats.forEach(c => { totals[c.label] = (totals[c.label] || 0) + (b[c.id] || 0); }));
+    return Object.entries(totals).filter(([, v]) => v > 0).map(([name, value]) => ({ name, value }));
+  }, [overviewData, safePersonalCategories]);
+
+  // Running balance — always all 12 months, but the line only connects through the current
+  // month. Later months are null so Recharts renders a gap (line ends at the current month)
+  // instead of dropping/trailing flat across the rest of the year.
+  const runningBalanceData = useMemo(() =>
+    monthlyBudget.map((r, i) => ({ ...r, balance: i <= CURRENT_MONTH_IDX ? r.balance : null })),
+  [monthlyBudget, CURRENT_MONTH_IDX]);
 
   // businessMonthly is now the editable monthly state (replaces derived monthlyBusinessBudget)
 
@@ -574,10 +591,10 @@ export default function BudgetDashboard() {
 
           <div style={{ display: "flex", gap: 14, marginBottom: 22, flexWrap: "wrap" }}>
             <KPI title="Income" value={fmtFull(overviewIncome)}
-              subtitle={overviewRange === "ytd" ? "Jan – Mar 2026" : overviewRange === "month" ? overviewMonth : "Full Year 2026"}
+              subtitle={overviewRange === "ytd" ? ytdLabel : overviewRange === "month" ? monthLabel : `Full Year ${currentYear}`}
               accent={T.green} color={T.green} />
             <KPI title="Expenses" value={fmtFull(overviewExpenses)}
-              subtitle={overviewRange === "ytd" ? "Jan – Mar 2026" : overviewRange === "month" ? overviewMonth : "Full Year 2026"}
+              subtitle={overviewRange === "ytd" ? ytdLabel : overviewRange === "month" ? monthLabel : `Full Year ${currentYear}`}
               accent={T.red} color={T.red} />
             <KPI title="Checking Balance" value={fmtFull(totalChecking)} subtitle="Sum of checking accounts" accent={T.copper} color={T.dark} />
             <KPI title="Credit Card Balance" value={fmtFull(totalDebt)} accent={T.red} negative={totalDebt > 0} color={T.red} />
@@ -610,7 +627,7 @@ export default function BudgetDashboard() {
             </Card>
 
             <Card style={{ flex: "1 1 280px" }}>
-              <CardTitle>Expense Breakdown (YTD)</CardTitle>
+              <CardTitle>Expense Breakdown ({overviewRange === "ytd" ? "YTD" : overviewRange === "month" ? overviewMonth : "Full Year"})</CardTitle>
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie data={expenseBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={48} outerRadius={78} paddingAngle={3} strokeWidth={0}>
@@ -633,7 +650,7 @@ export default function BudgetDashboard() {
           <Card>
             <CardTitle>Running Balance Over Time</CardTitle>
             <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={budget}>
+              <LineChart data={runningBalanceData}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border} strokeWidth={0.5} />
                 <XAxis dataKey="period" tick={{ fill: T.faint, fontSize: 9, fontFamily: "Inter" }} axisLine={{ stroke: T.border }} tickLine={false} />
                 <YAxis tickFormatter={fmt} tick={{ fill: T.faint, fontSize: 9, fontFamily: "Inter" }} axisLine={{ stroke: T.border }} tickLine={false} />
