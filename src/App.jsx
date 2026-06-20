@@ -29,35 +29,30 @@ const fmtFull = (n) => {
   const neg = n < 0;
   return (neg ? "-" : "") + "$" + Math.round(Math.abs(n)).toLocaleString("en-US");
 };
-const COLORS = {
-  bg:          "#faf7f2",
-  card:        "#f5f1e8",
-  border:      "#e0d8ca",
-  borderDark:  "#c8bba5",
-  text:        "#3d2e1e",
-  textDim:     "#7a6045",
-  textMuted:   "#a89070",
-  accent:      "#b5703a",
-  accentLight: "#d4944e",
-  accentPale:  "#faf0e6",
-  green:       "#2d4a35",
-  greenMid:    "#3d6348",
-  greenLight:  "#5a8a68",
-  greenPale:   "#eaf2ec",
-  red:         "#A63D3D",
-  redPale:     "rgba(166,61,61,0.09)",
-  slate:       "#3a4a5a",
-  slatePale:   "#eaf0f4",
-  tan:         "#d4c9b0",
-  footerBg:    "#1a1a18",
+
+// ── Design Tokens ────────────────────────────────────────────
+const T = {
+  bg:       '#f4f1ea',
+  surface:  '#fbf9f3',
+  dark:     '#1d1f17',
+  muted:    '#6f6a5c',
+  faint:    '#8a8475',
+  green:    '#2d5a38',
+  copper:   '#a87412',
+  red:      '#a5432b',
+  border:   'rgba(20,22,15,0.10)',
+  border2:  'rgba(20,22,15,0.16)',
+  fontSans: "'DM Mono', monospace",
+  fontSerif:"'Cormorant Garamond', serif",
 };
-const PIE_COLORS = ["#2d4a35","#b5703a","#3a4a5a","#7a6045","#5a8a68","#A63D3D","#d4944e"];
+const HEADER_BG = "#f0ece3";
+const CHIP_BG = "#ece7db";
+const PIE_COLORS = ["#2d5a38", "#a87412", "#6f6a5c", "#a5432b", "#8a8475", "#3d6348", "#c08a3a"];
 
 const Card = ({ children, style = {} }) => (
   <div style={{
-    background: "#f5f1e8",
-    border: "1px solid #e0d8ca",
-    borderRadius: 10,
+    background: T.surface,
+    border: `1px solid ${T.border}`,
     padding: "22px 24px",
     marginBottom: 20,
     ...style
@@ -67,10 +62,10 @@ const Card = ({ children, style = {} }) => (
 const CardTitle = ({ children }) => (
   <h3 style={{
     margin: "0 0 18px",
-    fontSize: "0.65rem",
-    color: "#a89070",
+    fontSize: 10,
+    color: T.muted,
     fontWeight: 500,
-    fontFamily: "'Syne', sans-serif",
+    fontFamily: T.fontSans,
     letterSpacing: "0.18em",
     textTransform: "uppercase",
   }}>{children}</h3>
@@ -80,15 +75,15 @@ const ChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{
-      background: "#faf7f2", border: "1px solid #e0d8ca", borderRadius: 8,
-      padding: "10px 14px", fontSize: 11, color: "#3d2e1e",
-      fontFamily: "'Jost', sans-serif",
+      background: T.surface, border: `1px solid ${T.border2}`,
+      padding: "10px 14px", fontSize: 11, color: T.dark,
+      fontFamily: T.fontSans,
     }}>
       <div style={{ fontWeight: 500, marginBottom: 6 }}>{label}</div>
       {payload.map((p, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
           <span style={{ width: 7, height: 7, borderRadius: "50%", background: p.color, display: "inline-block" }} />
-          <span style={{ color: "#a89070" }}>{p.name}:</span>
+          <span style={{ color: T.muted }}>{p.name}:</span>
           <span style={{ fontWeight: 500 }}>{fmtFull(p.value)}</span>
         </div>
       ))}
@@ -99,15 +94,14 @@ const ChartTooltip = ({ active, payload, label }) => {
 // ── Tab Button ───────────────────────────────────────────────
 const TabBtn = ({ active, onClick, children }) => (
   <button onClick={onClick} style={{
-    background: active ? "#2d4a35" : "transparent",
-    border: active ? "none" : "none",
-    borderRadius: 100,
-    color: active ? "#faf7f2" : "#a89070",
-    padding: "7px 18px",
-    fontSize: "0.62rem",
-    fontWeight: 500,
-    fontFamily: "'Syne', sans-serif",
-    letterSpacing: "0.12em",
+    background: active ? "#1d1f17" : "transparent",
+    border: active ? "1px solid #1d1f17" : `1px solid ${T.border2}`,
+    color: active ? "#f4f1ea" : T.muted,
+    padding: "8px 18px",
+    fontSize: 11,
+    fontWeight: 400,
+    fontFamily: T.fontSans,
+    letterSpacing: "0.14em",
     textTransform: "uppercase",
     cursor: "pointer",
     transition: "all 0.15s",
@@ -115,39 +109,38 @@ const TabBtn = ({ active, onClick, children }) => (
 );
 
 // ── KPI Card ─────────────────────────────────────────────────
-const KPI = ({ title, value, subtitle, color, negative = false }) => (
+const KPI = ({ title, value, subtitle, color, accent, negative = false }) => (
   <div style={{
-    background: "#f5f1e8",
-    border: "1px solid #e0d8ca",
-    borderLeft: "3px solid #b5703a",
-    borderRadius: "0 10px 10px 0",
-    padding: "16px 20px",
+    background: T.surface,
+    border: `1px solid ${T.border}`,
+    borderLeft: `3px solid ${accent || T.copper}`,
+    padding: "22px 24px",
     flex: 1,
     minWidth: 160,
   }}>
     <div style={{
-      fontSize: "0.6rem",
+      fontSize: 10,
       fontWeight: 500,
       letterSpacing: "0.16em",
       textTransform: "uppercase",
-      color: "#a89070",
-      marginBottom: 8,
-      fontFamily: "'Syne', sans-serif",
+      color: T.muted,
+      marginBottom: 10,
+      fontFamily: T.fontSans,
     }}>{title}</div>
     <div style={{
-      fontFamily: "'Cormorant Garamond', serif",
+      fontFamily: T.fontSerif,
       fontWeight: 600,
-      fontSize: "1.6rem",
-      color: color || (negative ? "#A63D3D" : "#3d2e1e"),
+      fontSize: "1.8rem",
+      color: color || (negative ? T.red : T.dark),
       lineHeight: 1,
       marginBottom: 5,
     }}>{value}</div>
     {subtitle && (
       <div style={{
-        fontSize: "0.68rem",
+        fontSize: 11,
         fontWeight: 300,
-        color: "#a89070",
-        fontFamily: "'Jost', sans-serif",
+        color: T.faint,
+        fontFamily: T.fontSans,
       }}>{subtitle}</div>
     )}
   </div>
@@ -156,23 +149,26 @@ const KPI = ({ title, value, subtitle, color, negative = false }) => (
 // ── Edit Modal ───────────────────────────────────────────────
 const Modal = ({ title, onClose, children }) => (
   <div style={{
-    position: "fixed", inset: 0, background: "rgba(61,46,30,0.45)", display: "flex",
-    alignItems: "center", justifyContent: "center", zIndex: 1000
+    position: "fixed", inset: 0, background: "rgba(20,22,15,0.45)", display: "flex",
+    alignItems: "center", justifyContent: "center", zIndex: 1000, animation: "lotusFade 0.2s ease"
   }} onClick={onClose}>
     <div style={{
-      background: "#faf7f2", borderRadius: 12, border: "1px solid #e0d8ca",
+      background: T.surface, border: `1px solid ${T.border2}`,
       padding: 28, minWidth: 380, maxWidth: 520, width: "90%", maxHeight: "80vh", overflowY: "auto"
     }} onClick={e => e.stopPropagation()}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
-        <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 600, fontSize: "1.3rem", color: "#3d2e1e" }}>{title}</h2>
+        <h2 style={{ fontFamily: T.fontSerif, fontWeight: 600, fontSize: "1.5rem", color: T.dark }}>{title}</h2>
         <button onClick={onClose} style={{
-          background: "none", border: "none", fontSize: 18, color: "#a89070", cursor: "pointer"
+          background: "none", border: "none", fontSize: 18, color: T.muted, cursor: "pointer"
         }}>✕</button>
       </div>
       {children}
     </div>
   </div>
 );
+
+const labelStyle = { display: "block", fontSize: 10, fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: T.muted, marginBottom: 5, fontFamily: T.fontSans };
+const fieldStyle = { width: "100%", padding: "9px 12px", background: T.bg, border: `1px solid ${T.border2}`, fontSize: 13, color: T.dark, fontFamily: T.fontSans, outline: "none", boxSizing: "border-box" };
 
 const Input = ({ label, value, onChange, type = "number" }) => {
   const [display, setDisplay] = useState(() => type === "number" ? String(value ?? 0) : value);
@@ -183,14 +179,14 @@ const Input = ({ label, value, onChange, type = "number" }) => {
   if (type !== "number") {
     return (
       <div style={{ marginBottom: 14 }}>
-        <label style={{ display: "block", fontSize: "0.58rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "#a89070", marginBottom: 5, fontFamily: "'Syne', sans-serif" }}>{label}</label>
-        <input type={type} value={value} onChange={e => onChange(e.target.value)} style={{ width: "100%", padding: "9px 12px", background: "#f5f1e8", border: "1px solid #c8bba5", borderRadius: 6, fontSize: 13, color: "#3d2e1e", fontFamily: "'Jost', sans-serif", outline: "none", boxSizing: "border-box" }} />
+        <label style={labelStyle}>{label}</label>
+        <input type={type} value={value} onChange={e => onChange(e.target.value)} style={fieldStyle} />
       </div>
     );
   }
   return (
     <div style={{ marginBottom: 14 }}>
-      <label style={{ display: "block", fontSize: "0.58rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "#a89070", marginBottom: 5, fontFamily: "'Syne', sans-serif" }}>{label}</label>
+      <label style={labelStyle}>{label}</label>
       <input
         type="text"
         inputMode="decimal"
@@ -220,7 +216,7 @@ const Input = ({ label, value, onChange, type = "number" }) => {
           setDisplay(String(final));
           onChange(final);
         }}
-        style={{ width: "100%", padding: "9px 12px", background: "#f5f1e8", border: "1px solid #c8bba5", borderRadius: 6, fontSize: 13, color: "#3d2e1e", fontFamily: "'Jost', sans-serif", outline: "none", boxSizing: "border-box" }}
+        style={fieldStyle}
       />
     </div>
   );
@@ -229,20 +225,24 @@ const Input = ({ label, value, onChange, type = "number" }) => {
 const Btn = ({ onClick, children, variant = "primary", style = {} }) => (
   <button onClick={onClick} style={{
     display: "inline-flex", alignItems: "center", gap: 6,
-    background: variant === "primary" ? "#2d4a35" : "transparent",
-    color: variant === "primary" ? "#faf7f2" : "#7a6045",
-    border: variant === "primary" ? "none" : "1px solid #c8bba5",
-    borderRadius: 100,
-    padding: variant === "primary" ? "8px 20px" : "7px 18px",
-    fontSize: "0.72rem",
-    fontFamily: "'Jost', sans-serif",
-    fontWeight: 500,
-    letterSpacing: "0.08em",
+    background: variant === "primary" ? T.green : "transparent",
+    color: variant === "primary" ? T.bg : T.muted,
+    border: variant === "primary" ? `1px solid ${T.green}` : `1px solid ${T.border2}`,
+    padding: variant === "primary" ? "9px 20px" : "8px 18px",
+    fontSize: 11,
+    fontFamily: T.fontSans,
+    fontWeight: 400,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
     cursor: "pointer",
     transition: "background 0.2s",
     ...style,
   }}>{children}</button>
 );
+
+// Shared row-action button styles
+const editBtnStyle = { border: `1px solid ${T.border2}`, background: "transparent", color: T.muted, fontFamily: T.fontSans, fontSize: 11, padding: "6px 14px", cursor: "pointer", letterSpacing: "0.08em" };
+const removeBtnStyle = { ...editBtnStyle, color: T.red, borderColor: "rgba(165,67,43,0.32)" };
 
 // ═════════════════════════════════════════════════════════════
 // MAIN DASHBOARD
@@ -263,6 +263,18 @@ export default function BudgetDashboard() {
   const [newBizCategoryForm, setNewBizCategoryForm] = useState({ label: "", type: "expense" });
   const [editingBizMonth, setEditingBizMonth] = useState(null);
   const [editingBizMonthDraft, setEditingBizMonthDraft] = useState(null);
+
+  // ── Responsive detection ─────────────────────────────────
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 760);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 980);
+  useEffect(() => {
+    const handle = () => {
+      setIsMobile(window.innerWidth < 760);
+      setIsDesktop(window.innerWidth >= 980);
+    };
+    window.addEventListener("resize", handle);
+    return () => window.removeEventListener("resize", handle);
+  }, []);
 
   // ── Derived Data ─────────────────────────────────────────
   const safeAccounts = accounts || [];
@@ -356,79 +368,204 @@ export default function BudgetDashboard() {
     });
   }, [personalCategories]);
 
+  // ── Render helpers for Budget / Business tabs ─────────────
+  const sumByType = (rows, cats, type) =>
+    rows.reduce((s, r) => s + cats.filter(c => c.type === type).reduce((sc, c) => sc + (r[c.id] || 0), 0), 0);
+
+  const renderSummaryCards = (rows, cats) => {
+    const inc = sumByType(rows, cats, "income");
+    const exp = sumByType(rows, cats, "expense");
+    const net = inc - exp;
+    const months = rows.filter(r => cats.some(c => (r[c.id] || 0) !== 0)).length;
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, minmax(0, 1fr))" : "repeat(2, minmax(0, 1fr))", gap: 14, marginBottom: 20 }}>
+        <KPI title="Total Income YTD" value={fmtFull(inc)} accent={T.copper} color={T.green} />
+        <KPI title="Total Expenses YTD" value={fmtFull(exp)} accent={T.red} color={T.red} />
+        <KPI title="Net Balance" value={fmtFull(net)} accent={T.green} color={net < 0 ? T.red : T.green} />
+        <KPI title="Months Entered" value={String(months)} accent={T.copper} color={T.dark} />
+      </div>
+    );
+  };
+
+  const renderBudgetTable = (rows, cats, onEdit) => {
+    const headerCellStyle = (align) => ({
+      textAlign: align, padding: "10px 12px", background: HEADER_BG,
+      color: T.muted, fontWeight: 500, fontSize: 10, whiteSpace: "nowrap",
+      textTransform: "uppercase", letterSpacing: "0.18em", fontFamily: T.fontSans,
+    });
+    const totalsCellStyle = (color) => ({ textAlign: "right", padding: "12px 12px", fontWeight: 500, fontSize: 11, color, fontFamily: T.fontSans });
+    return (
+      <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", background: T.surface, border: `1px solid ${T.border}` }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: Math.max(900, 300 + cats.length * 100) }}>
+          <thead>
+            <tr>
+              {["Period", ...cats.filter(c => c.type === "income").map(c => c.label), "Total In", ...cats.filter(c => c.type === "expense").map(c => c.label), "Total Exp", "Balance", ""].map((h, hi) => (
+                <th key={`${h}-${hi}`} style={headerCellStyle(h === "Period" || h === "" ? "left" : "right")}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={i} style={{ height: 52, borderBottom: `1px solid ${T.border}` }} onMouseEnter={e => e.currentTarget.style.background = "rgba(20,22,15,0.03)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                <td style={{ padding: "10px 12px", color: T.dark, fontWeight: 500, fontFamily: T.fontSans }}>{row.period}</td>
+                {(() => {
+                  const incCats = cats.filter(c => c.type === "income");
+                  const expCats = cats.filter(c => c.type === "expense");
+                  const totalIn = incCats.reduce((s, c) => s + (row[c.id] || 0), 0);
+                  const totalExp = expCats.reduce((s, c) => s + (row[c.id] || 0), 0);
+                  const bal = totalIn - totalExp;
+                  const cellStyle = { textAlign: "right", padding: "10px 12px", color: T.muted, fontFamily: T.fontSans, fontSize: 11 };
+                  return (<>
+                    {incCats.map(cat => <td key={cat.id} style={cellStyle}>{(row[cat.id] || 0) === 0 ? "—" : fmtFull(row[cat.id])}</td>)}
+                    <td style={{ ...cellStyle, color: T.green, fontWeight: 500 }}>{totalIn === 0 ? "—" : fmtFull(totalIn)}</td>
+                    {expCats.map(cat => <td key={cat.id} style={cellStyle}>{(row[cat.id] || 0) === 0 ? "—" : fmtFull(row[cat.id])}</td>)}
+                    <td style={{ ...cellStyle, color: T.red, fontWeight: 500 }}>{totalExp === 0 ? "—" : fmtFull(totalExp)}</td>
+                    <td style={{ ...cellStyle, color: bal < 0 ? T.red : T.green, fontWeight: 500 }}>{fmtFull(bal)}</td>
+                  </>);
+                })()}
+                <td style={{ padding: "10px 12px" }}>
+                  <button onClick={() => onEdit(row)} style={editBtnStyle}>Edit</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr style={{ borderTop: `1.5px solid ${T.border2}` }}>
+              <td style={{ padding: "12px 12px", fontWeight: 500, color: T.dark, fontFamily: T.fontSans, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase" }}>Totals</td>
+              {cats.filter(c => c.type === "income").map(cat => (
+                <td key={cat.id} style={totalsCellStyle(T.dark)}>{fmtFull(rows.reduce((s, r) => s + (r[cat.id] || 0), 0))}</td>
+              ))}
+              <td style={totalsCellStyle(T.green)}>{fmtFull(sumByType(rows, cats, "income"))}</td>
+              {cats.filter(c => c.type === "expense").map(cat => (
+                <td key={cat.id} style={totalsCellStyle(T.dark)}>{fmtFull(rows.reduce((s, r) => s + (r[cat.id] || 0), 0))}</td>
+              ))}
+              <td style={totalsCellStyle(T.red)}>{fmtFull(sumByType(rows, cats, "expense"))}</td>
+              <td style={totalsCellStyle(T.dark)}>{fmtFull(sumByType(rows, cats, "income") - sumByType(rows, cats, "expense"))}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    );
+  };
+
+  const renderBudgetCards = (rows, cats, onEdit) => {
+    const chipStyle = { background: CHIP_BG, fontSize: 10, padding: "3px 8px", letterSpacing: "0.06em", color: T.dark, fontFamily: T.fontSans };
+    return (
+      <div>
+        {rows.map((row, i) => {
+          const incCats = cats.filter(c => c.type === "income");
+          const expCats = cats.filter(c => c.type === "expense");
+          const totalIn = incCats.reduce((s, c) => s + (row[c.id] || 0), 0);
+          const totalExp = expCats.reduce((s, c) => s + (row[c.id] || 0), 0);
+          const bal = totalIn - totalExp;
+          const empty = totalIn === 0 && totalExp === 0;
+          const expChips = expCats.filter(c => (row[c.id] || 0) > 0).slice(0, 3);
+          return (
+            <div key={i} style={{
+              background: T.surface,
+              border: empty ? `1px dashed ${T.border2}` : `1px solid ${T.border}`,
+              padding: "16px 18px", marginBottom: 8,
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontFamily: T.fontSans, fontSize: 13, fontWeight: 500, color: T.dark }}>{row.period}</span>
+                {empty
+                  ? <span style={{ fontFamily: T.fontSans, fontSize: 11, color: T.faint }}>No data yet</span>
+                  : <span style={{ fontFamily: T.fontSerif, fontSize: "1.4rem", fontWeight: 600, color: bal < 0 ? T.red : T.green }}>{fmtFull(bal)}</span>}
+              </div>
+              {!empty && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
+                  <span style={chipStyle}>Income {fmtFull(totalIn)}</span>
+                  <span style={chipStyle}>Expenses {fmtFull(totalExp)}</span>
+                  {expChips.map(c => <span key={c.id} style={chipStyle}>{c.label} {fmtFull(row[c.id])}</span>)}
+                </div>
+              )}
+              <button onClick={() => onEdit(row)} style={{ ...editBtnStyle, width: "100%", padding: 10, marginTop: 12 }}>Edit</button>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const TABS = [
+    ["overview", "Overview"],
+    ["budget", "Budget"],
+    ["business", "Business"],
+    ["balances", "Balances"],
+    ["networth", "Net Worth"],
+  ];
+
   // ═══════════════════════════════════════════════════════════
   // RENDER
   // ═══════════════════════════════════════════════════════════
   return (
     <div style={{
-      minHeight: "100vh", background: "#faf7f2",
-      color: "#3d2e1e", fontFamily: "'Jost', sans-serif",
+      minHeight: "100vh", background: T.bg,
+      color: T.dark, fontFamily: T.fontSans,
     }}>
       {!isReady && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 9999,
-          background: "#faf7f2",
+          background: T.bg,
           display: "flex", alignItems: "center", justifyContent: "center",
-          color: "#7a6045", fontSize: 18
+          color: T.muted, fontSize: 18, fontFamily: T.fontSerif,
         }}>
           Loading…
         </div>
       )}
       {/* Header */}
       <div style={{
-        background: "#faf7f2", borderBottom: "1px solid #e0d8ca",
-        padding: "14px 28px", display: "flex", alignItems: "center",
-        justifyContent: "space-between", flexWrap: "wrap", gap: 12,
-        position: "sticky", top: 0, zIndex: 100,
+        background: "rgba(244,241,234,0.92)", backdropFilter: "blur(14px)",
+        borderBottom: `1px solid ${T.border}`,
+        position: "sticky", top: 0, zIndex: 40,
       }}>
-        <div>
-          <div style={{
-            fontFamily: "'Cormorant Garamond', serif", fontSize: "1.25rem",
-            fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase",
-            color: "#3d2e1e",
-          }}>
-            Lotus<em style={{ fontStyle: "italic", fontWeight: 400 }}>Ledger</em>
+        <div style={{
+          maxWidth: 1480, margin: "0 auto", padding: "18px 28px",
+          display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12,
+        }}>
+          <div>
+            <div>
+              <span style={{ fontFamily: T.fontSerif, fontWeight: 600, fontSize: 26, color: T.dark }}>LOTUS</span>
+              <span style={{ fontFamily: T.fontSerif, fontWeight: 300, fontStyle: "italic", fontSize: 26, color: T.dark, marginLeft: 5 }}>LEDGER</span>
+            </div>
+            <div style={{
+              fontFamily: T.fontSans, fontSize: 10,
+              letterSpacing: "0.22em", textTransform: "uppercase", color: T.copper, marginTop: 4,
+            }}>Personal Finance · 2026</div>
           </div>
-          <div style={{
-            fontFamily: "'Syne', sans-serif", fontSize: "0.6rem",
-            letterSpacing: "0.15em", textTransform: "uppercase", color: "#a89070", marginTop: 2,
-          }}>Personal Finance · 2026</div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          {[
-            ["overview", "Overview"],
-            ["budget", "Budget"],
-            ["business", "Business"],
-            ["balances", "Balances"],
-            ["networth", "Net Worth"],
-          ].map(([key, label]) => (
-            <TabBtn key={key} active={tab === key} onClick={() => setTab(key)}>{label}</TabBtn>
-          ))}
+          {!isMobile && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {TABS.map(([key, label]) => (
+                <TabBtn key={key} active={tab === key} onClick={() => setTab(key)}>{label}</TabBtn>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-      <div style={{ padding: "28px 28px 0" }}>
+      <div style={{ maxWidth: 1480, margin: "0 auto", padding: `28px 28px ${isMobile ? 110 : 70}px`, animation: "lotusFade 0.4s ease" }}>
 
       {/* ════ OVERVIEW TAB ════ */}
       {tab === "overview" && (
         <>
           {/* Period selector */}
           <div style={{ display: "flex", gap: 8, marginBottom: 18, alignItems: "center", flexWrap: "wrap" }}>
-            <div style={{ background: "rgba(212,201,176,0.35)", borderRadius: 100, padding: 3, display: "inline-flex", gap: 2 }}>
+            <div style={{ background: T.surface, border: `1px solid ${T.border}`, padding: 3, display: "inline-flex", gap: 2 }}>
               {[["ytd","YTD"],["month","Monthly"],["forecast","Full Year"]].map(([r,label]) => (
                 <button key={r} onClick={() => setOverviewRange(r)} style={{
-                  padding: "5px 16px", fontSize: "0.65rem", fontFamily: "'Syne', sans-serif",
-                  letterSpacing: "0.1em", textTransform: "uppercase",
-                  borderRadius: 100, border: "none", cursor: "pointer", transition: "all 0.15s",
-                  background: overviewRange === r ? "#2d4a35" : "transparent",
-                  color: overviewRange === r ? "#faf7f2" : "#a89070",
+                  padding: "6px 16px", fontSize: 10, fontFamily: T.fontSans,
+                  letterSpacing: "0.12em", textTransform: "uppercase",
+                  border: "none", cursor: "pointer", transition: "all 0.15s",
+                  background: overviewRange === r ? T.dark : "transparent",
+                  color: overviewRange === r ? T.bg : T.muted,
                 }}>{label}</button>
               ))}
             </div>
             {overviewRange === "month" && (
               <select value={overviewMonth} onChange={e => setOverviewMonth(e.target.value)} style={{
-                padding: "6px 12px", borderRadius: 100, border: "1px solid #c8bba5",
-                background: "#faf7f2", color: "#3d2e1e", fontSize: "0.72rem",
-                fontFamily: "'Jost', sans-serif", cursor: "pointer",
+                padding: "8px 12px", border: `1px solid ${T.border2}`,
+                background: T.surface, color: T.dark, fontSize: 11,
+                fontFamily: T.fontSans, cursor: "pointer",
               }}>
                 {MONTH_ORDER.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
@@ -438,12 +575,12 @@ export default function BudgetDashboard() {
           <div style={{ display: "flex", gap: 14, marginBottom: 22, flexWrap: "wrap" }}>
             <KPI title="Income" value={fmtFull(overviewIncome)}
               subtitle={overviewRange === "ytd" ? "Jan – Mar 2026" : overviewRange === "month" ? overviewMonth : "Full Year 2026"}
-              color={COLORS.green} />
+              accent={T.green} color={T.green} />
             <KPI title="Expenses" value={fmtFull(overviewExpenses)}
               subtitle={overviewRange === "ytd" ? "Jan – Mar 2026" : overviewRange === "month" ? overviewMonth : "Full Year 2026"}
-              color={COLORS.red} />
-            <KPI title="Checking Balance" value={fmtFull(totalChecking)} subtitle="Sum of checking accounts" color={COLORS.accent} />
-            <KPI title="Credit Card Balance" value={fmtFull(totalDebt)} negative={totalDebt > 0} color={COLORS.red} />
+              accent={T.red} color={T.red} />
+            <KPI title="Checking Balance" value={fmtFull(totalChecking)} subtitle="Sum of checking accounts" accent={T.copper} color={T.dark} />
+            <KPI title="Credit Card Balance" value={fmtFull(totalDebt)} accent={T.red} negative={totalDebt > 0} color={T.red} />
           </div>
 
           <div style={{ display: "flex", gap: 18, marginBottom: 22, flexWrap: "wrap" }}>
@@ -453,21 +590,21 @@ export default function BudgetDashboard() {
                 <AreaChart data={overviewData}>
                   <defs>
                     <linearGradient id="incG" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#2d4a35" stopOpacity={0.22} />
-                      <stop offset="100%" stopColor="#2d4a35" stopOpacity={0.02} />
+                      <stop offset="0%" stopColor={T.green} stopOpacity={0.22} />
+                      <stop offset="100%" stopColor={T.green} stopOpacity={0.02} />
                     </linearGradient>
                     <linearGradient id="expG" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#A63D3D" stopOpacity={0.18} />
-                      <stop offset="100%" stopColor="#A63D3D" stopOpacity={0.02} />
+                      <stop offset="0%" stopColor={T.red} stopOpacity={0.18} />
+                      <stop offset="100%" stopColor={T.red} stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0d8ca" strokeWidth={0.5} />
-                  <XAxis dataKey="period" tick={{ fill: "#a89070", fontSize: 9, fontFamily: "Jost" }} axisLine={{ stroke: "#e0d8ca" }} tickLine={false} />
-                  <YAxis tickFormatter={fmt} tick={{ fill: "#a89070", fontSize: 9, fontFamily: "Jost" }} axisLine={{ stroke: "#e0d8ca" }} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={T.border} strokeWidth={0.5} />
+                  <XAxis dataKey="period" tick={{ fill: T.faint, fontSize: 9, fontFamily: "DM Mono" }} axisLine={{ stroke: T.border }} tickLine={false} />
+                  <YAxis tickFormatter={fmt} tick={{ fill: T.faint, fontSize: 9, fontFamily: "DM Mono" }} axisLine={{ stroke: T.border }} tickLine={false} />
                   <Tooltip content={<ChartTooltip />} />
-                  <Area type="monotone" dataKey="totalIncome" stroke="#2d4a35" strokeWidth={2} fill="url(#incG)" name="Income" />
-                  <Area type="monotone" dataKey="totalExpense" stroke="#A63D3D" strokeWidth={2} fill="url(#expG)" name="Expenses" />
-                  <Legend wrapperStyle={{ color: "#a89070", fontSize: 10, fontFamily: "Jost", paddingTop: 8 }} />
+                  <Area type="monotone" dataKey="totalIncome" stroke={T.green} strokeWidth={2} fill="url(#incG)" name="Income" />
+                  <Area type="monotone" dataKey="totalExpense" stroke={T.red} strokeWidth={2} fill="url(#expG)" name="Expenses" />
+                  <Legend wrapperStyle={{ color: T.muted, fontSize: 10, fontFamily: "DM Mono", paddingTop: 8 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </Card>
@@ -479,12 +616,12 @@ export default function BudgetDashboard() {
                   <Pie data={expenseBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={48} outerRadius={78} paddingAngle={3} strokeWidth={0}>
                     {expenseBreakdown.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={v => fmtFull(v)} contentStyle={{ background: "#faf7f2", border: "1px solid #e0d8ca", borderRadius: 8, color: "#3d2e1e" }} />
+                  <Tooltip formatter={v => fmtFull(v)} contentStyle={{ background: T.surface, border: `1px solid ${T.border2}`, color: T.dark }} />
                 </PieChart>
               </ResponsiveContainer>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 18px", justifyContent: "center", marginTop: 14 }}>
                 {expenseBreakdown.map((e, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "#a89070" }}>
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: T.muted }}>
                     <span style={{ width: 7, height: 7, borderRadius: "50%", background: PIE_COLORS[i % PIE_COLORS.length], display: "inline-block" }} />
                     {e.name}
                   </div>
@@ -497,11 +634,11 @@ export default function BudgetDashboard() {
             <CardTitle>Running Balance Over Time</CardTitle>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={budget}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0d8ca" strokeWidth={0.5} />
-                <XAxis dataKey="period" tick={{ fill: "#a89070", fontSize: 9, fontFamily: "Jost" }} axisLine={{ stroke: "#e0d8ca" }} tickLine={false} />
-                <YAxis tickFormatter={fmt} tick={{ fill: "#a89070", fontSize: 9, fontFamily: "Jost" }} axisLine={{ stroke: "#e0d8ca" }} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={T.border} strokeWidth={0.5} />
+                <XAxis dataKey="period" tick={{ fill: T.faint, fontSize: 9, fontFamily: "DM Mono" }} axisLine={{ stroke: T.border }} tickLine={false} />
+                <YAxis tickFormatter={fmt} tick={{ fill: T.faint, fontSize: 9, fontFamily: "DM Mono" }} axisLine={{ stroke: T.border }} tickLine={false} />
                 <Tooltip content={<ChartTooltip />} />
-                <Line type="monotone" dataKey="balance" stroke="#b5703a" strokeWidth={2} dot={{ r: 4, fill: "#b5703a", stroke: "#faf7f2", strokeWidth: 2 }} name="Balance" />
+                <Line type="monotone" dataKey="balance" stroke={T.copper} strokeWidth={2} dot={{ r: 4, fill: T.copper, stroke: T.surface, strokeWidth: 2 }} name="Balance" />
               </LineChart>
             </ResponsiveContainer>
           </Card>
@@ -510,244 +647,84 @@ export default function BudgetDashboard() {
 
       {/* ════ BUDGET TAB ════ */}
       {tab === "budget" && (
-        <Card>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <CardTitle>Personal Budget — 2026 (Monthly)</CardTitle>
-            <Btn variant="primary" onClick={() => setManagingCategories(true)}>Manage Categories</Btn>
-          </div>
-          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: Math.max(900, 300 + personalCategories.length * 100) }}>
-              <thead>
-                <tr>
-                  {["Period", ...personalCategories.filter(c => c.type === "income").map(c => c.label), "Total In", ...personalCategories.filter(c => c.type === "expense").map(c => c.label), "Total Exp", "Balance", ""].map((h, hi, arr) => (
-                    <th key={`${h}-${hi}`} style={{
-                      textAlign: h === "Period" || h === "" ? "left" : "right",
-                      padding: "8px 12px", background: "rgba(212,201,176,0.3)",
-                      color: "#a89070", fontWeight: 500, fontSize: "0.58rem", whiteSpace: "nowrap",
-                      textTransform: "uppercase", letterSpacing: "0.12em",
-                      fontFamily: "'Syne', sans-serif",
-                      borderRadius: hi === 0 ? "6px 0 0 6px" : hi === arr.length - 1 ? "0 6px 6px 0" : 0,
-                    }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {monthlyBudget.map((row, i) => (
-                  <tr key={i} style={{ borderBottom: "0.5px solid #e0d8ca" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(212,201,176,0.12)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                    <td style={{ padding: "10px 12px", color: "#3d2e1e", fontWeight: 500 }}>{row.period}</td>
-                    {(() => {
-                      const incCats = personalCategories.filter(c => c.type === "income");
-                      const expCats = personalCategories.filter(c => c.type === "expense");
-                      const totalIn = incCats.reduce((s, c) => s + (row[c.id] || 0), 0);
-                      const totalExp = expCats.reduce((s, c) => s + (row[c.id] || 0), 0);
-                      const bal = totalIn - totalExp;
-                      const cellStyle = { textAlign: "right", padding: "10px 12px", color: "#7a6045", fontFamily: "'Jost', sans-serif", fontSize: 11 };
-                      return (<>
-                        {incCats.map(cat => <td key={cat.id} style={cellStyle}>{(row[cat.id] || 0) === 0 ? "—" : fmtFull(row[cat.id])}</td>)}
-                        <td style={{ ...cellStyle, color: "#2d4a35", fontWeight: 500 }}>{totalIn === 0 ? "—" : fmtFull(totalIn)}</td>
-                        {expCats.map(cat => <td key={cat.id} style={cellStyle}>{(row[cat.id] || 0) === 0 ? "—" : fmtFull(row[cat.id])}</td>)}
-                        <td style={{ ...cellStyle, color: "#A63D3D", fontWeight: 500 }}>{totalExp === 0 ? "—" : fmtFull(totalExp)}</td>
-                        <td style={{ ...cellStyle, color: bal < 0 ? "#A63D3D" : "#2d4a35", fontWeight: 500 }}>{fmtFull(bal)}</td>
-                      </>);
-                    })()}
-                    <td style={{ padding: "10px 12px" }}>
-                      <button onClick={() => { setEditingMonthDraft({ ...row }); setEditingMonth(row.period); }} style={{
-                        padding: "4px 12px", borderRadius: 100, border: "none", cursor: "pointer",
-                        background: "#eaf2ec", color: "#2d4a35", fontSize: "0.65rem",
-                        fontFamily: "'Jost', sans-serif", fontWeight: 500, letterSpacing: "0.06em",
-                      }}>Edit</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr style={{ borderTop: "1.5px solid #c8bba5" }}>
-                  <td style={{ padding: "10px 12px", fontWeight: 600, color: "#3d2e1e", fontFamily: "'Syne', sans-serif", fontSize: "0.6rem", letterSpacing: "0.08em", textTransform: "uppercase" }}>Totals</td>
-                  {personalCategories.filter(c => c.type === "income").map(cat => (
-                    <td key={cat.id} style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#3d2e1e", fontFamily: "'Jost', sans-serif" }}>
-                      {fmtFull(monthlyBudget.reduce((s, r) => s + (r[cat.id] || 0), 0))}
-                    </td>
-                  ))}
-                  <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#2d4a35", fontFamily: "'Jost', sans-serif" }}>
-                    {fmtFull(monthlyBudget.reduce((s, r) => s + personalCategories.filter(c => c.type === "income").reduce((si, c) => si + (r[c.id] || 0), 0), 0))}
-                  </td>
-                  {personalCategories.filter(c => c.type === "expense").map(cat => (
-                    <td key={cat.id} style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#3d2e1e", fontFamily: "'Jost', sans-serif" }}>
-                      {fmtFull(monthlyBudget.reduce((s, r) => s + (r[cat.id] || 0), 0))}
-                    </td>
-                  ))}
-                  <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#A63D3D", fontFamily: "'Jost', sans-serif" }}>
-                    {fmtFull(monthlyBudget.reduce((s, r) => s + personalCategories.filter(c => c.type === "expense").reduce((se, c) => se + (r[c.id] || 0), 0), 0))}
-                  </td>
-                  <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#3d2e1e", fontFamily: "'Jost', sans-serif" }}>
-                    {fmtFull(monthlyBudget.reduce((s, r) => {
-                      const ti = personalCategories.filter(c => c.type === "income").reduce((si, c) => si + (r[c.id] || 0), 0);
-                      const te = personalCategories.filter(c => c.type === "expense").reduce((se, c) => se + (r[c.id] || 0), 0);
-                      return s + (ti - te);
-                    }, 0))}
-                  </td>
-                  <td></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </Card>
+        <>
+          {renderSummaryCards(monthlyBudget, personalCategories)}
+          <Card>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
+              <CardTitle>Personal Budget — 2026 (Monthly)</CardTitle>
+              <Btn variant="primary" onClick={() => setManagingCategories(true)}>Manage Categories</Btn>
+            </div>
+            {isMobile
+              ? renderBudgetCards(monthlyBudget, personalCategories, (row) => { setEditingMonthDraft({ ...row }); setEditingMonth(row.period); })
+              : renderBudgetTable(monthlyBudget, personalCategories, (row) => { setEditingMonthDraft({ ...row }); setEditingMonth(row.period); })}
+          </Card>
+        </>
       )}
 
       {/* ════ BUSINESS TAB ════ */}
       {tab === "business" && (
-        <Card>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <CardTitle>Business Budget — 2026 (Monthly)</CardTitle>
-            <Btn variant="primary" onClick={() => setManagingBizCategories(true)}>Manage Categories</Btn>
-          </div>
-          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: Math.max(900, 300 + businessCategories.length * 100) }}>
-              <thead>
-                <tr>
-                  {["Period", ...businessCategories.filter(c => c.type === "income").map(c => c.label), "Total In", ...businessCategories.filter(c => c.type === "expense").map(c => c.label), "Total Exp", "Balance", ""].map((h, hi, arr) => (
-                    <th key={`${h}-${hi}`} style={{
-                      textAlign: h === "Period" || h === "" ? "left" : "right",
-                      padding: "8px 12px", background: "rgba(212,201,176,0.3)",
-                      color: "#a89070", fontWeight: 500, fontSize: "0.58rem", whiteSpace: "nowrap",
-                      textTransform: "uppercase", letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif",
-                      borderRadius: hi === 0 ? "6px 0 0 6px" : hi === arr.length - 1 ? "0 6px 6px 0" : 0,
-                    }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {businessMonthly.map((row, i) => (
-                  <tr key={i} style={{ borderBottom: "0.5px solid #e0d8ca" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(212,201,176,0.12)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                    <td style={{ padding: "10px 12px", color: "#3d2e1e", fontWeight: 500 }}>{row.period}</td>
-                    {(() => {
-                      const incCats = businessCategories.filter(c => c.type === "income");
-                      const expCats = businessCategories.filter(c => c.type === "expense");
-                      const totalIn = incCats.reduce((s, c) => s + (row[c.id] || 0), 0);
-                      const totalExp = expCats.reduce((s, c) => s + (row[c.id] || 0), 0);
-                      const bal = totalIn - totalExp;
-                      const cellStyle = { textAlign: "right", padding: "10px 12px", color: "#7a6045", fontFamily: "'Jost', sans-serif", fontSize: 11 };
-                      return (<>
-                        {incCats.map(cat => <td key={cat.id} style={cellStyle}>{(row[cat.id] || 0) === 0 ? "—" : fmtFull(row[cat.id])}</td>)}
-                        <td style={{ ...cellStyle, color: "#2d4a35", fontWeight: 500 }}>{totalIn === 0 ? "—" : fmtFull(totalIn)}</td>
-                        {expCats.map(cat => <td key={cat.id} style={cellStyle}>{(row[cat.id] || 0) === 0 ? "—" : fmtFull(row[cat.id])}</td>)}
-                        <td style={{ ...cellStyle, color: "#A63D3D", fontWeight: 500 }}>{totalExp === 0 ? "—" : fmtFull(totalExp)}</td>
-                        <td style={{ ...cellStyle, color: bal < 0 ? "#A63D3D" : "#2d4a35", fontWeight: 500 }}>{fmtFull(bal)}</td>
-                      </>);
-                    })()}
-                    <td style={{ padding: "10px 12px" }}>
-                      <button onClick={() => { setEditingBizMonthDraft({ ...row }); setEditingBizMonth(row.period); }} style={{
-                        padding: "4px 12px", borderRadius: 100, border: "none", cursor: "pointer",
-                        background: "#eaf2ec", color: "#2d4a35", fontSize: "0.65rem",
-                        fontFamily: "'Jost', sans-serif", fontWeight: 500, letterSpacing: "0.06em",
-                      }}>Edit</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr style={{ borderTop: "1.5px solid #c8bba5" }}>
-                  <td style={{ padding: "10px 12px", fontWeight: 600, color: "#3d2e1e", fontFamily: "'Syne', sans-serif", fontSize: "0.6rem", letterSpacing: "0.08em", textTransform: "uppercase" }}>Totals</td>
-                  {businessCategories.filter(c => c.type === "income").map(cat => (
-                    <td key={cat.id} style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#3d2e1e", fontFamily: "'Jost', sans-serif" }}>
-                      {fmtFull(businessMonthly.reduce((s, r) => s + (r[cat.id] || 0), 0))}
-                    </td>
-                  ))}
-                  <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#2d4a35", fontFamily: "'Jost', sans-serif" }}>
-                    {fmtFull(businessMonthly.reduce((s, r) => s + businessCategories.filter(c => c.type === "income").reduce((si, c) => si + (r[c.id] || 0), 0), 0))}
-                  </td>
-                  {businessCategories.filter(c => c.type === "expense").map(cat => (
-                    <td key={cat.id} style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#3d2e1e", fontFamily: "'Jost', sans-serif" }}>
-                      {fmtFull(businessMonthly.reduce((s, r) => s + (r[cat.id] || 0), 0))}
-                    </td>
-                  ))}
-                  <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#A63D3D", fontFamily: "'Jost', sans-serif" }}>
-                    {fmtFull(businessMonthly.reduce((s, r) => s + businessCategories.filter(c => c.type === "expense").reduce((se, c) => se + (r[c.id] || 0), 0), 0))}
-                  </td>
-                  <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 600, fontSize: 11, color: "#3d2e1e", fontFamily: "'Jost', sans-serif" }}>
-                    {fmtFull(businessMonthly.reduce((s, r) => {
-                      const ti = businessCategories.filter(c => c.type === "income").reduce((si, c) => si + (r[c.id] || 0), 0);
-                      const te = businessCategories.filter(c => c.type === "expense").reduce((se, c) => se + (r[c.id] || 0), 0);
-                      return s + (ti - te);
-                    }, 0))}
-                  </td>
-                  <td></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </Card>
+        <>
+          {renderSummaryCards(businessMonthly, businessCategories)}
+          <Card>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
+              <CardTitle>Business Budget — 2026 (Monthly)</CardTitle>
+              <Btn variant="primary" onClick={() => setManagingBizCategories(true)}>Manage Categories</Btn>
+            </div>
+            {isMobile
+              ? renderBudgetCards(businessMonthly, businessCategories, (row) => { setEditingBizMonthDraft({ ...row }); setEditingBizMonth(row.period); })
+              : renderBudgetTable(businessMonthly, businessCategories, (row) => { setEditingBizMonthDraft({ ...row }); setEditingBizMonth(row.period); })}
+          </Card>
+        </>
       )}
 
       {/* ════ BALANCES TAB ════ */}
       {tab === "balances" && (
         <>
           <div style={{ display: "flex", gap: 14, marginBottom: 22, flexWrap: "wrap" }}>
-            <KPI title="Cash & Checking" value={fmtFull(totalCash)} color={COLORS.green} />
-            <KPI title="Investments & Retirement" value={fmtFull(totalInvestments)} color={COLORS.accent} />
-            <KPI title="Real Estate & Assets" value={fmtFull(totalAssets)} color={COLORS.accent} />
-            <KPI title="Credit Card Debt" value={fmtFull(totalDebt)} negative={totalDebt > 0} />
+            <KPI title="Cash & Checking" value={fmtFull(totalCash)} accent={T.green} color={T.green} />
+            <KPI title="Investments & Retirement" value={fmtFull(totalInvestments)} accent={T.copper} color={T.dark} />
+            <KPI title="Real Estate & Assets" value={fmtFull(totalAssets)} accent={T.copper} color={T.dark} />
+            <KPI title="Credit Card Debt" value={fmtFull(totalDebt)} accent={T.red} negative={totalDebt > 0} color={T.red} />
           </div>
 
           <Card>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
               <CardTitle>Account Balances</CardTitle>
               <Btn onClick={() => setAddingAccount(true)} variant="primary">+ Add Account</Btn>
             </div>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
-              <thead>
-                <tr>
-                  {["Account", "Type", "Balance", "Last Updated", "Actions"].map((h, hi) => (
-                    <th key={h} style={{
-                      textAlign: h === "Balance" ? "right" : "left", padding: "8px 12px",
-                      background: "rgba(212,201,176,0.3)", color: "#a89070", fontWeight: 500, fontSize: "0.58rem",
-                      textTransform: "uppercase", letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif",
-                      borderRadius: hi === 0 ? "6px 0 0 6px" : hi === 4 ? "0 6px 6px 0" : 0,
-                    }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {[...accounts].sort((a, b) => a.type.localeCompare(b.type)).map((a) => {
-                  const badgeStyle = (() => {
-                    if (a.type === "Credit Card") return { bg: "rgba(166,61,61,0.09)", color: "#A63D3D", border: "1px solid rgba(166,61,61,0.15)" };
-                    if (a.type === "Investment")  return { bg: "#eaf0f4", color: "#3a4a5a", border: "1px solid rgba(58,74,90,0.15)" };
-                    if (a.type === "Retirement")  return { bg: "#faf0e6", color: "#b5703a", border: "1px solid rgba(181,112,58,0.15)" };
-                    if (a.type === "Asset")       return { bg: "rgba(212,201,176,0.4)", color: "#7a6045", border: "1px solid #c8bba5" };
-                    return { bg: "#eaf2ec", color: "#2d4a35", border: "1px solid rgba(45,74,53,0.15)" };
-                  })();
-                  return (
-                    <tr key={a.id} style={{ borderBottom: "0.5px solid #e0d8ca" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(212,201,176,0.12)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                      <td style={{ padding: "10px 12px", color: "#3d2e1e", fontWeight: 500 }}>{a.name}</td>
-                      <td style={{ padding: "10px 12px" }}>
-                        <span style={{
-                          display: "inline-block", padding: "2px 10px", borderRadius: 100,
-                          fontFamily: "'Syne', sans-serif", fontSize: "0.58rem",
-                          letterSpacing: "0.08em", textTransform: "uppercase",
-                          background: badgeStyle.bg, color: badgeStyle.color, border: badgeStyle.border,
-                        }}>{a.type}</span>
-                      </td>
-                      <td style={{ padding: "10px 12px", textAlign: "right", fontFamily: "'Jost', sans-serif", fontWeight: 500, fontSize: 13, color: a.type === "Credit Card" && a.balance > 0 ? "#A63D3D" : "#3d2e1e" }}>
-                        {fmtFull(a.balance)}
-                      </td>
-                      <td style={{ padding: "10px 12px", color: "#a89070", fontSize: 11 }}>{a.lastUpdated}</td>
-                      <td style={{ padding: "10px 12px", display: "flex", gap: 6 }}>
-                        <button onClick={() => setEditingAccount(a)} style={{
-                          padding: "4px 12px", borderRadius: 100, border: "none", cursor: "pointer",
-                          background: "#eaf2ec", color: "#2d4a35", fontSize: "0.65rem",
-                          fontFamily: "'Jost', sans-serif", fontWeight: 500, letterSpacing: "0.06em",
-                        }}>Update</button>
-                        <button onClick={() => removeAccount(a.id)} style={{
-                          padding: "4px 12px", borderRadius: 100, border: "none", cursor: "pointer",
-                          background: "rgba(166,61,61,0.09)", color: "#A63D3D", fontSize: "0.65rem",
-                          fontFamily: "'Jost', sans-serif", fontWeight: 500, letterSpacing: "0.06em",
-                        }}>Remove</button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div>
+              {[...accounts].sort((a, b) => a.type.localeCompare(b.type)).map((a) => {
+                const isDebt = a.type === "Credit Card";
+                return (
+                  <div key={a.id} style={{
+                    display: "flex", flexDirection: isMobile ? "column" : "row",
+                    alignItems: isMobile ? "stretch" : "center", justifyContent: "space-between",
+                    gap: isMobile ? 12 : 16,
+                    background: T.surface, border: `1px solid ${T.border}`, padding: "14px 18px", marginBottom: 6,
+                  }}>
+                    <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", gap: isMobile ? 6 : 12 }}>
+                      <span style={{ fontFamily: T.fontSans, fontSize: 14, color: T.dark }}>{a.name}</span>
+                      <span style={{
+                        display: "inline-block", padding: "2px 8px",
+                        fontFamily: T.fontSans, fontSize: 10,
+                        letterSpacing: "0.1em", textTransform: "uppercase",
+                        background: CHIP_BG, color: isDebt ? T.red : T.muted,
+                      }}>{a.type}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: isMobile ? "space-between" : "flex-end", gap: 16, width: isMobile ? "100%" : "auto" }}>
+                      <div style={{ textAlign: isMobile ? "left" : "right" }}>
+                        <div style={{ fontFamily: T.fontSans, fontWeight: 500, fontSize: 14, color: isDebt && a.balance > 0 ? T.red : T.dark }}>{fmtFull(a.balance)}</div>
+                        <div style={{ fontSize: 11, color: T.faint, fontFamily: T.fontSans }}>{a.lastUpdated}</div>
+                      </div>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button onClick={() => setEditingAccount(a)} style={editBtnStyle}>Update</button>
+                        <button onClick={() => removeAccount(a.id)} style={removeBtnStyle}>Remove</button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </Card>
         </>
       )}
@@ -756,10 +733,10 @@ export default function BudgetDashboard() {
       {tab === "networth" && (
         <>
           <div style={{ display: "flex", gap: 14, marginBottom: 22, flexWrap: "wrap" }}>
-            <KPI title="Total Net Worth" value={fmtFull(netWorth)} color={COLORS.accent} />
-            <KPI title="Liquid Assets" value={fmtFull(240000)} subtitle="Savings" color={COLORS.green} />
-            <KPI title="Real Estate" value={fmtFull(2000000)} subtitle="Home value" color={COLORS.accent} />
-            <KPI title="Retirement" value={fmtFull(390000)} subtitle="All retirement accounts" color={COLORS.green} />
+            <KPI title="Total Net Worth" value={fmtFull(netWorth)} accent={T.copper} color={T.dark} />
+            <KPI title="Liquid Assets" value={fmtFull(240000)} subtitle="Savings" accent={T.green} color={T.green} />
+            <KPI title="Real Estate" value={fmtFull(2000000)} subtitle="Home value" accent={T.copper} color={T.dark} />
+            <KPI title="Retirement" value={fmtFull(390000)} subtitle="All retirement accounts" accent={T.green} color={T.green} />
           </div>
 
           <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
@@ -770,12 +747,12 @@ export default function BudgetDashboard() {
                   <Pie data={netWorthPie} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} paddingAngle={2} strokeWidth={0}>
                     {netWorthPie.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={v => fmtFull(v)} contentStyle={{ background: "#faf7f2", border: "1px solid #e0d8ca", borderRadius: 8, color: "#3d2e1e" }} />
+                  <Tooltip formatter={v => fmtFull(v)} contentStyle={{ background: T.surface, border: `1px solid ${T.border2}`, color: T.dark }} />
                 </PieChart>
               </ResponsiveContainer>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 18px", justifyContent: "center", marginTop: 14 }}>
                 {netWorthPie.map((e, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "#a89070" }}>
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: T.muted }}>
                     <span style={{ width: 8, height: 8, borderRadius: "50%", background: PIE_COLORS[i % PIE_COLORS.length], display: "inline-block" }} />
                     {e.name}: {fmtFull(e.value)}
                   </div>
@@ -787,11 +764,11 @@ export default function BudgetDashboard() {
               <CardTitle>Asset Breakdown</CardTitle>
               <ResponsiveContainer width="100%" height={320}>
                 <BarChart data={netWorthPie} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0d8ca" strokeWidth={0.5} />
-                  <XAxis type="number" tickFormatter={fmt} tick={{ fill: "#a89070", fontSize: 9, fontFamily: "Jost" }} axisLine={{ stroke: "#e0d8ca" }} tickLine={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fill: "#a89070", fontSize: 10, fontFamily: "Jost" }} axisLine={{ stroke: "#e0d8ca" }} tickLine={false} width={120} />
-                  <Tooltip formatter={v => fmtFull(v)} contentStyle={{ background: "#faf7f2", border: "1px solid #e0d8ca", borderRadius: 8, color: "#3d2e1e" }} />
-                  <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={T.border} strokeWidth={0.5} />
+                  <XAxis type="number" tickFormatter={fmt} tick={{ fill: T.faint, fontSize: 9, fontFamily: "DM Mono" }} axisLine={{ stroke: T.border }} tickLine={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fill: T.faint, fontSize: 10, fontFamily: "DM Mono" }} axisLine={{ stroke: T.border }} tickLine={false} width={120} />
+                  <Tooltip formatter={v => fmtFull(v)} contentStyle={{ background: T.surface, border: `1px solid ${T.border2}`, color: T.dark }} />
+                  <Bar dataKey="value" radius={[0, 0, 0, 0]}>
                     {netWorthPie.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Bar>
                 </BarChart>
@@ -806,14 +783,11 @@ export default function BudgetDashboard() {
         <Modal title="Edit Account" onClose={() => setEditingAccount(null)}>
           <Input label="Account Name" type="text" value={editingAccount.name} onChange={v => setEditingAccount({ ...editingAccount, name: v })} />
           <div style={{ marginBottom: 14 }}>
-            <label style={{ display: "block", fontSize: "0.58rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "#a89070", marginBottom: 5, fontFamily: "'Syne', sans-serif" }}>Type</label>
+            <label style={labelStyle}>Type</label>
             <select
               value={editingAccount.type}
               onChange={e => setEditingAccount({ ...editingAccount, type: e.target.value })}
-              style={{
-                width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid #c8bba5",
-                background: "#f5f1e8", color: "#3d2e1e", fontSize: 13, fontFamily: "'Jost', sans-serif",
-              }}
+              style={fieldStyle}
             >
               {["Checking", "Savings", "Credit Card", "Investment", "Retirement", "Asset"].map(t => (
                 <option key={t} value={t}>{t}</option>
@@ -831,7 +805,7 @@ export default function BudgetDashboard() {
       {editingMonth && editingMonthDraft && (
         <Modal title={editingMonth} onClose={() => { setEditingMonth(null); setEditingMonthDraft(null); }}>
           {personalCategories.filter(c => c.type === "income").length > 0 && (
-            <div style={{ fontSize: "0.58rem", color: "#a89070", marginBottom: 8, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Income</div>
+            <div style={{ fontSize: 10, color: T.muted, marginBottom: 8, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: T.fontSans, paddingBottom: 6, borderBottom: `1px solid ${T.border}` }}>Income</div>
           )}
           {personalCategories.filter(c => c.type === "income").map(cat => (
             <Input key={cat.id} label={cat.label}
@@ -840,7 +814,7 @@ export default function BudgetDashboard() {
             />
           ))}
           {personalCategories.filter(c => c.type === "expense").length > 0 && (
-            <div style={{ fontSize: "0.58rem", color: "#a89070", margin: "16px 0 10px", textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Expenses</div>
+            <div style={{ fontSize: 10, color: T.muted, margin: "16px 0 10px", textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: T.fontSans, paddingBottom: 6, borderBottom: `1px solid ${T.border}` }}>Expenses</div>
           )}
           {personalCategories.filter(c => c.type === "expense").map(cat => (
             <Input key={cat.id} label={cat.label}
@@ -870,14 +844,11 @@ export default function BudgetDashboard() {
         <Modal title="Add New Account" onClose={() => setAddingAccount(false)}>
           <Input label="Account Name" value={newAccount.name} type="text" onChange={v => setNewAccount(p => ({ ...p, name: v }))} />
           <div style={{ marginBottom: 14 }}>
-            <label style={{ display: "block", fontSize: "0.58rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "#a89070", marginBottom: 5, fontFamily: "'Syne', sans-serif" }}>Type</label>
+            <label style={labelStyle}>Type</label>
             <select
               value={newAccount.type}
               onChange={e => setNewAccount(p => ({ ...p, type: e.target.value }))}
-              style={{
-                width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid #c8bba5",
-                background: "#f5f1e8", color: "#3d2e1e", fontSize: 13, fontFamily: "'Jost', sans-serif",
-              }}
+              style={fieldStyle}
             >
               {["Checking", "Savings", "Credit Card", "Investment", "Retirement", "Asset"].map(t => (
                 <option key={t} value={t}>{t}</option>
@@ -896,43 +867,40 @@ export default function BudgetDashboard() {
         <Modal title="Manage Categories" onClose={() => setManagingCategories(false)}>
           <div style={{ marginBottom: 4 }}>
             {personalCategories.length === 0 && (
-              <div style={{ color: "#a89070", fontSize: 12, padding: "8px 0" }}>No categories yet.</div>
+              <div style={{ color: T.muted, fontSize: 12, padding: "8px 0" }}>No categories yet.</div>
             )}
             {personalCategories.map((cat, idx) => (
-              <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "0.5px solid #e0d8ca" }}>
+              <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: `1px solid ${T.border}` }}>
                 {/* Up / Down */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   <button disabled={idx === 0} onClick={() => setPersonalCategories(prev => {
                     const a = [...prev]; [a[idx - 1], a[idx]] = [a[idx], a[idx - 1]]; return a;
-                  })} style={{ background: "none", border: "none", cursor: idx === 0 ? "default" : "pointer", color: idx === 0 ? "#d4c9b0" : "#a89070", fontSize: 10, lineHeight: 1, padding: "1px 3px" }}>▲</button>
+                  })} style={{ background: "none", border: "none", cursor: idx === 0 ? "default" : "pointer", color: idx === 0 ? T.border2 : T.muted, fontSize: 10, lineHeight: 1, padding: "1px 3px" }}>▲</button>
                   <button disabled={idx === personalCategories.length - 1} onClick={() => setPersonalCategories(prev => {
                     const a = [...prev]; [a[idx], a[idx + 1]] = [a[idx + 1], a[idx]]; return a;
-                  })} style={{ background: "none", border: "none", cursor: idx === personalCategories.length - 1 ? "default" : "pointer", color: idx === personalCategories.length - 1 ? "#d4c9b0" : "#a89070", fontSize: 10, lineHeight: 1, padding: "1px 3px" }}>▼</button>
+                  })} style={{ background: "none", border: "none", cursor: idx === personalCategories.length - 1 ? "default" : "pointer", color: idx === personalCategories.length - 1 ? T.border2 : T.muted, fontSize: 10, lineHeight: 1, padding: "1px 3px" }}>▼</button>
                 </div>
                 {/* Inline rename input */}
                 <input
                   value={cat.label}
                   onChange={e => setPersonalCategories(prev => prev.map((c, i) => i === idx ? { ...c, label: e.target.value } : c))}
-                  style={{ flex: 1, padding: "5px 8px", background: "#f5f1e8", border: "1px solid #c8bba5", borderRadius: 6, fontSize: 13, color: "#3d2e1e", fontFamily: "'Jost', sans-serif", outline: "none" }}
+                  style={{ flex: 1, padding: "5px 8px", background: T.bg, border: `1px solid ${T.border2}`, fontSize: 13, color: T.dark, fontFamily: T.fontSans, outline: "none" }}
                 />
                 {/* Type badge */}
-                <span style={{ fontSize: "0.58rem", color: cat.type === "income" ? "#2d4a35" : "#a89070", fontFamily: "'Syne', sans-serif", textTransform: "uppercase", letterSpacing: "0.08em", minWidth: 52 }}>{cat.type}</span>
+                <span style={{ fontSize: 10, color: cat.type === "income" ? T.green : T.muted, fontFamily: T.fontSans, textTransform: "uppercase", letterSpacing: "0.08em", minWidth: 52 }}>{cat.type}</span>
                 {/* Remove */}
                 <button onClick={() => setPersonalCategories(prev => prev.filter((_, i) => i !== idx))} style={{
-                  background: "none", border: "none", color: "#A63D3D", cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "0 2px",
+                  background: "none", border: "none", color: T.red, cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "0 2px",
                 }}>×</button>
               </div>
             ))}
           </div>
-          <div style={{ marginTop: 20, paddingTop: 14, borderTop: "1px solid #e0d8ca" }}>
-            <div style={{ fontSize: "0.58rem", color: "#a89070", marginBottom: 10, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif" }}>Add Category</div>
+          <div style={{ marginTop: 20, paddingTop: 14, borderTop: `1px solid ${T.border}` }}>
+            <div style={{ fontSize: 10, color: T.muted, marginBottom: 10, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: T.fontSans }}>Add Category</div>
             <Input label="Label" type="text" value={newCategoryForm.label} onChange={v => setNewCategoryForm(p => ({ ...p, label: v }))} />
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: "0.58rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "#a89070", marginBottom: 5, fontFamily: "'Syne', sans-serif" }}>Type</label>
-              <select value={newCategoryForm.type} onChange={e => setNewCategoryForm(p => ({ ...p, type: e.target.value }))} style={{
-                width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid #c8bba5",
-                background: "#f5f1e8", color: "#3d2e1e", fontSize: 13, fontFamily: "'Jost', sans-serif",
-              }}>
+              <label style={labelStyle}>Type</label>
+              <select value={newCategoryForm.type} onChange={e => setNewCategoryForm(p => ({ ...p, type: e.target.value }))} style={fieldStyle}>
                 <option value="expense">Expense</option>
                 <option value="income">Income</option>
               </select>
@@ -956,7 +924,7 @@ export default function BudgetDashboard() {
       {editingBizMonth && editingBizMonthDraft && (
         <Modal title={editingBizMonth} onClose={() => { setEditingBizMonth(null); setEditingBizMonthDraft(null); }}>
           {businessCategories.filter(c => c.type === "income").length > 0 && (
-            <div style={{ fontSize: "0.58rem", color: "#a89070", marginBottom: 8, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Income</div>
+            <div style={{ fontSize: 10, color: T.muted, marginBottom: 8, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: T.fontSans, paddingBottom: 6, borderBottom: `1px solid ${T.border}` }}>Income</div>
           )}
           {businessCategories.filter(c => c.type === "income").map(cat => (
             <Input key={cat.id} label={cat.label}
@@ -965,7 +933,7 @@ export default function BudgetDashboard() {
             />
           ))}
           {businessCategories.filter(c => c.type === "expense").length > 0 && (
-            <div style={{ fontSize: "0.58rem", color: "#a89070", margin: "16px 0 10px", textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif", paddingBottom: 6, borderBottom: "1px solid #e0d8ca" }}>Expenses</div>
+            <div style={{ fontSize: 10, color: T.muted, margin: "16px 0 10px", textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: T.fontSans, paddingBottom: 6, borderBottom: `1px solid ${T.border}` }}>Expenses</div>
           )}
           {businessCategories.filter(c => c.type === "expense").map(cat => (
             <Input key={cat.id} label={cat.label}
@@ -989,39 +957,36 @@ export default function BudgetDashboard() {
         <Modal title="Manage Business Categories" onClose={() => setManagingBizCategories(false)}>
           <div style={{ marginBottom: 4 }}>
             {businessCategories.length === 0 && (
-              <div style={{ color: "#a89070", fontSize: 12, padding: "8px 0" }}>No categories yet.</div>
+              <div style={{ color: T.muted, fontSize: 12, padding: "8px 0" }}>No categories yet.</div>
             )}
             {businessCategories.map((cat, idx) => (
-              <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "0.5px solid #e0d8ca" }}>
+              <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: `1px solid ${T.border}` }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   <button disabled={idx === 0} onClick={() => setBusinessCategories(prev => {
                     const a = [...prev]; [a[idx - 1], a[idx]] = [a[idx], a[idx - 1]]; return a;
-                  })} style={{ background: "none", border: "none", cursor: idx === 0 ? "default" : "pointer", color: idx === 0 ? "#d4c9b0" : "#a89070", fontSize: 10, lineHeight: 1, padding: "1px 3px" }}>▲</button>
+                  })} style={{ background: "none", border: "none", cursor: idx === 0 ? "default" : "pointer", color: idx === 0 ? T.border2 : T.muted, fontSize: 10, lineHeight: 1, padding: "1px 3px" }}>▲</button>
                   <button disabled={idx === businessCategories.length - 1} onClick={() => setBusinessCategories(prev => {
                     const a = [...prev]; [a[idx], a[idx + 1]] = [a[idx + 1], a[idx]]; return a;
-                  })} style={{ background: "none", border: "none", cursor: idx === businessCategories.length - 1 ? "default" : "pointer", color: idx === businessCategories.length - 1 ? "#d4c9b0" : "#a89070", fontSize: 10, lineHeight: 1, padding: "1px 3px" }}>▼</button>
+                  })} style={{ background: "none", border: "none", cursor: idx === businessCategories.length - 1 ? "default" : "pointer", color: idx === businessCategories.length - 1 ? T.border2 : T.muted, fontSize: 10, lineHeight: 1, padding: "1px 3px" }}>▼</button>
                 </div>
                 <input
                   value={cat.label}
                   onChange={e => setBusinessCategories(prev => prev.map((c, i) => i === idx ? { ...c, label: e.target.value } : c))}
-                  style={{ flex: 1, padding: "5px 8px", background: "#f5f1e8", border: "1px solid #c8bba5", borderRadius: 6, fontSize: 13, color: "#3d2e1e", fontFamily: "'Jost', sans-serif", outline: "none" }}
+                  style={{ flex: 1, padding: "5px 8px", background: T.bg, border: `1px solid ${T.border2}`, fontSize: 13, color: T.dark, fontFamily: T.fontSans, outline: "none" }}
                 />
-                <span style={{ fontSize: "0.58rem", color: cat.type === "income" ? "#2d4a35" : "#a89070", fontFamily: "'Syne', sans-serif", textTransform: "uppercase", letterSpacing: "0.08em", minWidth: 52 }}>{cat.type}</span>
+                <span style={{ fontSize: 10, color: cat.type === "income" ? T.green : T.muted, fontFamily: T.fontSans, textTransform: "uppercase", letterSpacing: "0.08em", minWidth: 52 }}>{cat.type}</span>
                 <button onClick={() => setBusinessCategories(prev => prev.filter((_, i) => i !== idx))} style={{
-                  background: "none", border: "none", color: "#A63D3D", cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "0 2px",
+                  background: "none", border: "none", color: T.red, cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "0 2px",
                 }}>×</button>
               </div>
             ))}
           </div>
-          <div style={{ marginTop: 20, paddingTop: 14, borderTop: "1px solid #e0d8ca" }}>
-            <div style={{ fontSize: "0.58rem", color: "#a89070", marginBottom: 10, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: "'Syne', sans-serif" }}>Add Category</div>
+          <div style={{ marginTop: 20, paddingTop: 14, borderTop: `1px solid ${T.border}` }}>
+            <div style={{ fontSize: 10, color: T.muted, marginBottom: 10, textTransform: "uppercase", fontWeight: 500, letterSpacing: "0.12em", fontFamily: T.fontSans }}>Add Category</div>
             <Input label="Label" type="text" value={newBizCategoryForm.label} onChange={v => setNewBizCategoryForm(p => ({ ...p, label: v }))} />
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: "0.58rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "#a89070", marginBottom: 5, fontFamily: "'Syne', sans-serif" }}>Type</label>
-              <select value={newBizCategoryForm.type} onChange={e => setNewBizCategoryForm(p => ({ ...p, type: e.target.value }))} style={{
-                width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid #c8bba5",
-                background: "#f5f1e8", color: "#3d2e1e", fontSize: 13, fontFamily: "'Jost', sans-serif",
-              }}>
+              <label style={labelStyle}>Type</label>
+              <select value={newBizCategoryForm.type} onChange={e => setNewBizCategoryForm(p => ({ ...p, type: e.target.value }))} style={fieldStyle}>
                 <option value="expense">Expense</option>
                 <option value="income">Income</option>
               </select>
@@ -1043,6 +1008,24 @@ export default function BudgetDashboard() {
       )}
 
       </div>
+
+      {/* Mobile bottom tab bar — sits above the footer so both stay visible */}
+      {isMobile && (
+        <div style={{
+          position: "fixed", bottom: 40, left: 0, right: 0, zIndex: 491,
+          background: "rgba(244,241,234,0.96)", backdropFilter: "blur(14px)",
+          borderTop: `1px solid ${T.border}`, display: "flex",
+        }}>
+          {TABS.map(([key, label]) => (
+            <button key={key} onClick={() => setTab(key)} style={{
+              flex: 1, padding: "12px 4px 16px", textAlign: "center", fontFamily: T.fontSans,
+              fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer",
+              border: "none", background: "transparent", color: tab === key ? T.green : T.faint,
+            }}>{label}</button>
+          ))}
+        </div>
+      )}
+
       {/* Fixed footer bar */}
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0, height: 40, zIndex: 490,
@@ -1054,7 +1037,7 @@ export default function BudgetDashboard() {
         }}>
           <img src="/lotus-logo.png" alt="Lotus AI" style={{ width: 28, height: 28, objectFit: "contain" }} />
           <span style={{
-            fontFamily: "'Syne', sans-serif", fontSize: "0.58rem", fontWeight: 500,
+            fontFamily: T.fontSans, fontSize: 10, fontWeight: 500,
             letterSpacing: "0.28em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)",
           }}>Powered by Lotus AI</span>
         </a>
