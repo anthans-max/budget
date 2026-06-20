@@ -35,14 +35,14 @@ const T = {
   bg:       '#f4f1ea',
   surface:  '#fbf9f3',
   dark:     '#1d1f17',
-  muted:    '#6f6a5c',
-  faint:    '#8a8475',
+  muted:    '#3d3a30',
+  faint:    '#5a5650',
   green:    '#2d5a38',
   copper:   '#a87412',
   red:      '#a5432b',
   border:   'rgba(20,22,15,0.10)',
   border2:  'rgba(20,22,15,0.16)',
-  fontSans: "'DM Mono', monospace",
+  fontSans: "'Inter', sans-serif",
   fontSerif:"'Cormorant Garamond', serif",
 };
 const HEADER_BG = "#f0ece3";
@@ -98,8 +98,8 @@ const TabBtn = ({ active, onClick, children }) => (
     border: active ? "1px solid #1d1f17" : `1px solid ${T.border2}`,
     color: active ? "#f4f1ea" : T.muted,
     padding: "8px 18px",
-    fontSize: 11,
-    fontWeight: 400,
+    fontSize: 13,
+    fontWeight: 500,
     fontFamily: T.fontSans,
     letterSpacing: "0.14em",
     textTransform: "uppercase",
@@ -113,14 +113,14 @@ const KPI = ({ title, value, subtitle, color, accent, negative = false }) => (
   <div style={{
     background: T.surface,
     border: `1px solid ${T.border}`,
-    borderLeft: `3px solid ${accent || T.copper}`,
+    borderLeft: `4px solid ${accent || T.copper}`,
     padding: "22px 24px",
     flex: 1,
     minWidth: 160,
   }}>
     <div style={{
-      fontSize: 10,
-      fontWeight: 500,
+      fontSize: 13,
+      fontWeight: 600,
       letterSpacing: "0.16em",
       textTransform: "uppercase",
       color: T.muted,
@@ -130,15 +130,15 @@ const KPI = ({ title, value, subtitle, color, accent, negative = false }) => (
     <div style={{
       fontFamily: T.fontSerif,
       fontWeight: 600,
-      fontSize: "1.8rem",
+      fontSize: "2.2rem",
       color: color || (negative ? T.red : T.dark),
       lineHeight: 1,
       marginBottom: 5,
     }}>{value}</div>
     {subtitle && (
       <div style={{
-        fontSize: 11,
-        fontWeight: 300,
+        fontSize: 13,
+        fontWeight: 400,
         color: T.faint,
         fontFamily: T.fontSans,
       }}>{subtitle}</div>
@@ -168,7 +168,7 @@ const Modal = ({ title, onClose, children }) => (
 );
 
 const labelStyle = { display: "block", fontSize: 10, fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: T.muted, marginBottom: 5, fontFamily: T.fontSans };
-const fieldStyle = { width: "100%", padding: "9px 12px", background: T.bg, border: `1px solid ${T.border2}`, fontSize: 13, color: T.dark, fontFamily: T.fontSans, outline: "none", boxSizing: "border-box" };
+const fieldStyle = { width: "100%", padding: "10px 12px", background: T.bg, border: `1px solid ${T.border2}`, fontSize: 15, color: T.dark, fontFamily: T.fontSans, outline: "none", boxSizing: "border-box" };
 
 const Input = ({ label, value, onChange, type = "number" }) => {
   const [display, setDisplay] = useState(() => type === "number" ? String(value ?? 0) : value);
@@ -241,7 +241,7 @@ const Btn = ({ onClick, children, variant = "primary", style = {} }) => (
 );
 
 // Shared row-action button styles
-const editBtnStyle = { border: `1px solid ${T.border2}`, background: "transparent", color: T.muted, fontFamily: T.fontSans, fontSize: 11, padding: "6px 14px", cursor: "pointer", letterSpacing: "0.08em" };
+const editBtnStyle = { border: `1px solid ${T.border2}`, background: "transparent", color: T.muted, fontFamily: T.fontSans, fontSize: 13, padding: "7px 16px", cursor: "pointer", letterSpacing: "0.04em" };
 const removeBtnStyle = { ...editBtnStyle, color: T.red, borderColor: "rgba(165,67,43,0.32)" };
 
 // ═════════════════════════════════════════════════════════════
@@ -390,10 +390,10 @@ export default function BudgetDashboard() {
   const renderBudgetTable = (rows, cats, onEdit) => {
     const headerCellStyle = (align) => ({
       textAlign: align, padding: "10px 12px", background: HEADER_BG,
-      color: T.muted, fontWeight: 500, fontSize: 10, whiteSpace: "nowrap",
-      textTransform: "uppercase", letterSpacing: "0.18em", fontFamily: T.fontSans,
+      color: T.dark, fontWeight: 600, fontSize: 12, whiteSpace: "nowrap",
+      textTransform: "uppercase", letterSpacing: "0.14em", fontFamily: T.fontSans,
     });
-    const totalsCellStyle = (color) => ({ textAlign: "right", padding: "12px 12px", fontWeight: 500, fontSize: 11, color, fontFamily: T.fontSans });
+    const totalsCellStyle = (color) => ({ textAlign: "right", padding: "12px 12px", fontWeight: 600, fontSize: 13, color, fontFamily: T.fontSans });
     return (
       <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", background: T.surface, border: `1px solid ${T.border}` }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: Math.max(900, 300 + cats.length * 100) }}>
@@ -407,14 +407,14 @@ export default function BudgetDashboard() {
           <tbody>
             {rows.map((row, i) => (
               <tr key={i} style={{ height: 52, borderBottom: `1px solid ${T.border}` }} onMouseEnter={e => e.currentTarget.style.background = "rgba(20,22,15,0.03)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                <td style={{ padding: "10px 12px", color: T.dark, fontWeight: 500, fontFamily: T.fontSans }}>{row.period}</td>
+                <td style={{ padding: "10px 12px", color: T.dark, fontWeight: 500, fontFamily: T.fontSans, fontSize: 15 }}>{row.period}</td>
                 {(() => {
                   const incCats = cats.filter(c => c.type === "income");
                   const expCats = cats.filter(c => c.type === "expense");
                   const totalIn = incCats.reduce((s, c) => s + (row[c.id] || 0), 0);
                   const totalExp = expCats.reduce((s, c) => s + (row[c.id] || 0), 0);
                   const bal = totalIn - totalExp;
-                  const cellStyle = { textAlign: "right", padding: "10px 12px", color: T.muted, fontFamily: T.fontSans, fontSize: 11 };
+                  const cellStyle = { textAlign: "right", padding: "10px 12px", color: T.muted, fontFamily: T.fontSans, fontSize: 15 };
                   return (<>
                     {incCats.map(cat => <td key={cat.id} style={cellStyle}>{(row[cat.id] || 0) === 0 ? "—" : fmtFull(row[cat.id])}</td>)}
                     <td style={{ ...cellStyle, color: T.green, fontWeight: 500 }}>{totalIn === 0 ? "—" : fmtFull(totalIn)}</td>
@@ -431,7 +431,7 @@ export default function BudgetDashboard() {
           </tbody>
           <tfoot>
             <tr style={{ borderTop: `1.5px solid ${T.border2}` }}>
-              <td style={{ padding: "12px 12px", fontWeight: 500, color: T.dark, fontFamily: T.fontSans, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase" }}>Totals</td>
+              <td style={{ padding: "12px 12px", fontWeight: 600, color: T.dark, fontFamily: T.fontSans, fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase" }}>Totals</td>
               {cats.filter(c => c.type === "income").map(cat => (
                 <td key={cat.id} style={totalsCellStyle(T.dark)}>{fmtFull(rows.reduce((s, r) => s + (r[cat.id] || 0), 0))}</td>
               ))}
@@ -450,7 +450,7 @@ export default function BudgetDashboard() {
   };
 
   const renderBudgetCards = (rows, cats, onEdit) => {
-    const chipStyle = { background: CHIP_BG, fontSize: 10, padding: "3px 8px", letterSpacing: "0.06em", color: T.dark, fontFamily: T.fontSans };
+    const chipStyle = { background: CHIP_BG, fontSize: 13, padding: "4px 10px", letterSpacing: "0.02em", color: T.dark, fontFamily: T.fontSans };
     return (
       <div>
         {rows.map((row, i) => {
@@ -465,22 +465,22 @@ export default function BudgetDashboard() {
             <div key={i} style={{
               background: T.surface,
               border: empty ? `1px dashed ${T.border2}` : `1px solid ${T.border}`,
-              padding: "16px 18px", marginBottom: 8,
+              padding: "20px 22px", marginBottom: 8,
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontFamily: T.fontSans, fontSize: 13, fontWeight: 500, color: T.dark }}>{row.period}</span>
+                <span style={{ fontFamily: T.fontSans, fontSize: 17, fontWeight: 600, color: T.dark }}>{row.period}</span>
                 {empty
-                  ? <span style={{ fontFamily: T.fontSans, fontSize: 11, color: T.faint }}>No data yet</span>
-                  : <span style={{ fontFamily: T.fontSerif, fontSize: "1.4rem", fontWeight: 600, color: bal < 0 ? T.red : T.green }}>{fmtFull(bal)}</span>}
+                  ? <span style={{ fontFamily: T.fontSans, fontSize: 13, color: T.faint }}>No data yet</span>
+                  : <span style={{ fontFamily: T.fontSerif, fontSize: "1.6rem", fontWeight: 600, color: bal < 0 ? T.red : T.green }}>{fmtFull(bal)}</span>}
               </div>
               {!empty && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 16 }}>
                   <span style={chipStyle}>Income {fmtFull(totalIn)}</span>
                   <span style={chipStyle}>Expenses {fmtFull(totalExp)}</span>
                   {expChips.map(c => <span key={c.id} style={chipStyle}>{c.label} {fmtFull(row[c.id])}</span>)}
                 </div>
               )}
-              <button onClick={() => onEdit(row)} style={{ ...editBtnStyle, width: "100%", padding: 10, marginTop: 12 }}>Edit</button>
+              <button onClick={() => onEdit(row)} style={{ ...editBtnStyle, width: "100%", padding: 10, marginTop: 16, minHeight: 48 }}>Edit</button>
             </div>
           );
         })}
@@ -502,7 +502,7 @@ export default function BudgetDashboard() {
   return (
     <div style={{
       minHeight: "100vh", background: T.bg,
-      color: T.dark, fontFamily: T.fontSans,
+      color: T.dark, fontFamily: T.fontSans, fontSize: 16,
     }}>
       {!isReady && (
         <div style={{
@@ -599,12 +599,12 @@ export default function BudgetDashboard() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke={T.border} strokeWidth={0.5} />
-                  <XAxis dataKey="period" tick={{ fill: T.faint, fontSize: 9, fontFamily: "DM Mono" }} axisLine={{ stroke: T.border }} tickLine={false} />
-                  <YAxis tickFormatter={fmt} tick={{ fill: T.faint, fontSize: 9, fontFamily: "DM Mono" }} axisLine={{ stroke: T.border }} tickLine={false} />
+                  <XAxis dataKey="period" tick={{ fill: T.faint, fontSize: 9, fontFamily: "Inter" }} axisLine={{ stroke: T.border }} tickLine={false} />
+                  <YAxis tickFormatter={fmt} tick={{ fill: T.faint, fontSize: 9, fontFamily: "Inter" }} axisLine={{ stroke: T.border }} tickLine={false} />
                   <Tooltip content={<ChartTooltip />} />
                   <Area type="monotone" dataKey="totalIncome" stroke={T.green} strokeWidth={2} fill="url(#incG)" name="Income" />
                   <Area type="monotone" dataKey="totalExpense" stroke={T.red} strokeWidth={2} fill="url(#expG)" name="Expenses" />
-                  <Legend wrapperStyle={{ color: T.muted, fontSize: 10, fontFamily: "DM Mono", paddingTop: 8 }} />
+                  <Legend wrapperStyle={{ color: T.muted, fontSize: 10, fontFamily: "Inter", paddingTop: 8 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </Card>
@@ -635,8 +635,8 @@ export default function BudgetDashboard() {
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={budget}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border} strokeWidth={0.5} />
-                <XAxis dataKey="period" tick={{ fill: T.faint, fontSize: 9, fontFamily: "DM Mono" }} axisLine={{ stroke: T.border }} tickLine={false} />
-                <YAxis tickFormatter={fmt} tick={{ fill: T.faint, fontSize: 9, fontFamily: "DM Mono" }} axisLine={{ stroke: T.border }} tickLine={false} />
+                <XAxis dataKey="period" tick={{ fill: T.faint, fontSize: 9, fontFamily: "Inter" }} axisLine={{ stroke: T.border }} tickLine={false} />
+                <YAxis tickFormatter={fmt} tick={{ fill: T.faint, fontSize: 9, fontFamily: "Inter" }} axisLine={{ stroke: T.border }} tickLine={false} />
                 <Tooltip content={<ChartTooltip />} />
                 <Line type="monotone" dataKey="balance" stroke={T.copper} strokeWidth={2} dot={{ r: 4, fill: T.copper, stroke: T.surface, strokeWidth: 2 }} name="Balance" />
               </LineChart>
@@ -703,18 +703,18 @@ export default function BudgetDashboard() {
                     background: T.surface, border: `1px solid ${T.border}`, padding: "14px 18px", marginBottom: 6,
                   }}>
                     <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", gap: isMobile ? 6 : 12 }}>
-                      <span style={{ fontFamily: T.fontSans, fontSize: 14, color: T.dark }}>{a.name}</span>
+                      <span style={{ fontFamily: T.fontSans, fontSize: 15, color: T.dark }}>{a.name}</span>
                       <span style={{
-                        display: "inline-block", padding: "2px 8px",
-                        fontFamily: T.fontSans, fontSize: 10,
-                        letterSpacing: "0.1em", textTransform: "uppercase",
-                        background: CHIP_BG, color: isDebt ? T.red : T.muted,
+                        display: "inline-block", padding: "3px 9px",
+                        fontFamily: T.fontSans, fontSize: 12, fontWeight: 500,
+                        letterSpacing: "0.08em", textTransform: "uppercase",
+                        background: CHIP_BG, color: isDebt ? T.red : T.dark,
                       }}>{a.type}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: isMobile ? "space-between" : "flex-end", gap: 16, width: isMobile ? "100%" : "auto" }}>
                       <div style={{ textAlign: isMobile ? "left" : "right" }}>
-                        <div style={{ fontFamily: T.fontSans, fontWeight: 500, fontSize: 14, color: isDebt && a.balance > 0 ? T.red : T.dark }}>{fmtFull(a.balance)}</div>
-                        <div style={{ fontSize: 11, color: T.faint, fontFamily: T.fontSans }}>{a.lastUpdated}</div>
+                        <div style={{ fontFamily: T.fontSans, fontWeight: 500, fontSize: 15, color: isDebt && a.balance > 0 ? T.red : T.dark }}>{fmtFull(a.balance)}</div>
+                        <div style={{ fontSize: 13, color: T.faint, fontFamily: T.fontSans }}>{a.lastUpdated}</div>
                       </div>
                       <div style={{ display: "flex", gap: 6 }}>
                         <button onClick={() => setEditingAccount(a)} style={editBtnStyle}>Update</button>
@@ -765,8 +765,8 @@ export default function BudgetDashboard() {
               <ResponsiveContainer width="100%" height={320}>
                 <BarChart data={netWorthPie} layout="vertical" margin={{ left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={T.border} strokeWidth={0.5} />
-                  <XAxis type="number" tickFormatter={fmt} tick={{ fill: T.faint, fontSize: 9, fontFamily: "DM Mono" }} axisLine={{ stroke: T.border }} tickLine={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fill: T.faint, fontSize: 10, fontFamily: "DM Mono" }} axisLine={{ stroke: T.border }} tickLine={false} width={120} />
+                  <XAxis type="number" tickFormatter={fmt} tick={{ fill: T.faint, fontSize: 9, fontFamily: "Inter" }} axisLine={{ stroke: T.border }} tickLine={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fill: T.faint, fontSize: 10, fontFamily: "Inter" }} axisLine={{ stroke: T.border }} tickLine={false} width={120} />
                   <Tooltip formatter={v => fmtFull(v)} contentStyle={{ background: T.surface, border: `1px solid ${T.border2}`, color: T.dark }} />
                   <Bar dataKey="value" radius={[0, 0, 0, 0]}>
                     {netWorthPie.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
@@ -1019,8 +1019,8 @@ export default function BudgetDashboard() {
           {TABS.map(([key, label]) => (
             <button key={key} onClick={() => setTab(key)} style={{
               flex: 1, padding: "12px 4px 16px", textAlign: "center", fontFamily: T.fontSans,
-              fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer",
-              border: "none", background: "transparent", color: tab === key ? T.green : T.faint,
+              fontSize: 11, fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer",
+              border: "none", background: "transparent", color: tab === key ? T.green : T.muted,
             }}>{label}</button>
           ))}
         </div>
