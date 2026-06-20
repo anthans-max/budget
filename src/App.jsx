@@ -6,22 +6,16 @@ import {
 } from "recharts";
 import { useBudgetData, monthNames } from "./useBudgetData";
 
+// Account types offered in the Add/Edit modals (stored title-case).
+const ACCOUNT_TYPES = ["Checking", "Savings", "Credit Card", "Mortgage", "Investment", "Retirement", "Asset"];
+
 // Balances tab — account groupings, in display order. Subtotals use T.red for debt.
 const BALANCE_GROUPS = [
   { label: "Checking", types: ["Checking"] },
   { label: "Credit Cards", types: ["Credit Card"], debt: true },
+  { label: "Mortgages", types: ["Mortgage"], debt: true },
   { label: "Investments & Retirement", types: ["Investment", "Retirement"] },
   { label: "Assets", types: ["Asset"] },
-];
-
-const netWorthItems = [
-  { name: "Savings", value: 240000 },
-  { name: "Robinhood", value: 0 },
-  { name: "Aaranya Fund", value: 110000 },
-  { name: "Saanvi Fund", value: 100000 },
-  { name: "Home", value: 2000000 },
-  { name: "Retirement", value: 240000 },
-  { name: "Saiyini Retirement", value: 150000 },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -67,6 +61,12 @@ const T = {
 const HEADER_BG = "#f0ece3";
 const CHIP_BG = "#ece7db";
 const PIE_COLORS = ["#2d5a38", "#a87412", "#6f6a5c", "#a5432b", "#8a8475", "#3d6348", "#c08a3a"];
+
+// Account-type badge colors. Mortgage gets a distinct muted burgundy.
+const accountBadge = (type) =>
+  type === "Mortgage"    ? { bg: "#f0e6e6", color: "#7a2020" } :
+  type === "Credit Card" ? { bg: CHIP_BG,  color: T.red }      :
+                           { bg: CHIP_BG,  color: T.dark };
 
 const Card = ({ children, style = {} }) => (
   <div style={{
@@ -370,17 +370,20 @@ export default function BudgetDashboard() {
   const liveInvestments = liveTotal(a => ["Investment", "Retirement"].includes(a.type));
   const liveAssets = liveTotal(a => a.type === "Asset");
   const liveDebt = liveTotal(a => a.type === "Credit Card");
-  const netWorth = useMemo(() => {
-    const nw = netWorthItems.reduce((s, i) => s + i.value, 0);
-    return nw;
-  }, []);
+  const liveMortgage = liveTotal(a => a.type === "Mortgage");
+  const liveAssetsTotal = liveCash + liveInvestments + liveAssets;
+  const liveLiabilities = liveMortgage + liveDebt;
+  const liveNetWorth = liveAssetsTotal - liveLiabilities;
+  const liveHomeEquity = liveAssets - liveMortgage; // real estate minus mortgage
+  const assetPie = [
+    { name: "Cash & Checking", value: liveCash },
+    { name: "Investments & Retirement", value: liveInvestments },
+    { name: "Real Estate", value: liveAssets },
+  ].filter(s => s.value > 0);
 
   const totalIncomeAll = useMemo(() => safeBudget.reduce((s, b) => s + b.totalIncome, 0), [safeBudget]);
   const totalExpenseAll = useMemo(() => safeBudget.reduce((s, b) => s + b.totalExpense, 0), [safeBudget]);
   const latestBalance = safeBudget.length > 0 ? safeBudget[safeBudget.length - 1].balance : 0;
-
-  const netWorthPie = useMemo(() =>
-    netWorthItems.filter(i => i.value > 0).map(i => ({ ...i })), []);
 
   const MONTH_ORDER = monthNames;
   const CURRENT_MONTH_IDX = new Date().getMonth(); // 0-indexed current calendar month (e.g. June = 5)
@@ -866,11 +869,12 @@ export default function BudgetDashboard() {
       {/* ════ BALANCES TAB ════ */}
       {tab === "balances" && (
         <>
-          <div style={{ display: "flex", gap: 14, marginBottom: 22, flexWrap: "wrap" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, marginBottom: 22 }}>
             <KPI title="Cash & Checking" value={fmtFull(liveCash)} accent={T.green} color={T.green} />
             <KPI title="Investments & Retirement" value={fmtFull(liveInvestments)} accent={T.copper} color={T.dark} />
             <KPI title="Real Estate & Assets" value={fmtFull(liveAssets)} accent={T.copper} color={T.dark} />
-            <KPI title="Credit Card Debt" value={fmtFull(liveDebt)} accent={T.red} negative={liveDebt > 0} color={T.red} />
+            <KPI title="Total Liabilities" value={fmtFull(liveLiabilities)} accent={T.red} negative={liveLiabilities > 0} color={T.red} />
+            <KPI title="Net Worth" value={fmtFull(liveNetWorth)} accent={T.green} color={liveNetWorth < 0 ? T.red : T.green} />
           </div>
 
           <Card>
@@ -894,7 +898,8 @@ export default function BudgetDashboard() {
                       <span style={{ fontSize: 14, fontWeight: 600, color: group.debt ? T.red : T.dark }}>{fmtFull(subtotal)}</span>
                     </div>
                     {groupAccounts.map((a) => {
-                      const isDebt = a.type === "Credit Card";
+                      const isDebt = ["Credit Card", "Mortgage"].includes(a.type);
+                      const badge = accountBadge(a.type);
                       return (
                         <div key={a.id} style={{
                           display: "flex", flexDirection: isMobile ? "column" : "row",
@@ -908,7 +913,7 @@ export default function BudgetDashboard() {
                               display: "inline-block", padding: "3px 9px",
                               fontFamily: T.fontSans, fontSize: 12, fontWeight: 500,
                               letterSpacing: "0.08em", textTransform: "uppercase",
-                              background: CHIP_BG, color: isDebt ? T.red : T.dark,
+                              background: badge.bg, color: badge.color,
                             }}>{a.type}</span>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: isMobile ? "space-between" : "flex-end", gap: 16, width: isMobile ? "100%" : "auto" }}>
@@ -962,26 +967,26 @@ export default function BudgetDashboard() {
       {/* ════ NET WORTH TAB ════ */}
       {tab === "networth" && (
         <>
-          <div style={{ display: "flex", gap: 14, marginBottom: 22, flexWrap: "wrap" }}>
-            <KPI title="Total Net Worth" value={fmtFull(netWorth)} accent={T.copper} color={T.dark} />
-            <KPI title="Liquid Assets" value={fmtFull(240000)} subtitle="Savings" accent={T.green} color={T.green} />
-            <KPI title="Real Estate" value={fmtFull(2000000)} subtitle="Home value" accent={T.copper} color={T.dark} />
-            <KPI title="Retirement" value={fmtFull(390000)} subtitle="All retirement accounts" accent={T.green} color={T.green} />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, marginBottom: 22 }}>
+            <KPI title="Total Net Worth" value={fmtFull(liveNetWorth)} accent={T.green} color={liveNetWorth < 0 ? T.red : T.green} />
+            <KPI title="Total Assets" value={fmtFull(liveAssetsTotal)} accent={T.copper} color={T.dark} />
+            <KPI title="Total Liabilities" value={fmtFull(liveLiabilities)} accent={T.red} negative={liveLiabilities > 0} color={T.red} />
+            <KPI title="Home Equity" value={fmtFull(liveHomeEquity)} subtitle="Real estate − mortgage" accent={T.green} color={liveHomeEquity < 0 ? T.red : T.green} />
           </div>
 
           <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
             <Card style={{ flex: "1 1 350px" }}>
-              <CardTitle>Net Worth Composition</CardTitle>
+              <CardTitle>Asset Breakdown</CardTitle>
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
-                  <Pie data={netWorthPie} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} paddingAngle={2} strokeWidth={0}>
-                    {netWorthPie.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                  <Pie data={assetPie} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} paddingAngle={2} strokeWidth={0}>
+                    {assetPie.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
                   <Tooltip formatter={v => fmtFull(v)} contentStyle={{ background: T.surface, border: `1px solid ${T.border2}`, color: T.dark }} />
                 </PieChart>
               </ResponsiveContainer>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 18px", justifyContent: "center", marginTop: 14 }}>
-                {netWorthPie.map((e, i) => (
+                {assetPie.map((e, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: T.muted }}>
                     <span style={{ width: 8, height: 8, borderRadius: "50%", background: PIE_COLORS[i % PIE_COLORS.length], display: "inline-block" }} />
                     {e.name}: {fmtFull(e.value)}
@@ -991,18 +996,26 @@ export default function BudgetDashboard() {
             </Card>
 
             <Card style={{ flex: "1 1 350px" }}>
-              <CardTitle>Asset Breakdown</CardTitle>
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={netWorthPie} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={T.border} strokeWidth={0.5} />
-                  <XAxis type="number" tickFormatter={fmt} tick={{ fill: T.faint, fontSize: 9, fontFamily: "Inter" }} axisLine={{ stroke: T.border }} tickLine={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fill: T.faint, fontSize: 10, fontFamily: "Inter" }} axisLine={{ stroke: T.border }} tickLine={false} width={120} />
-                  <Tooltip formatter={v => fmtFull(v)} contentStyle={{ background: T.surface, border: `1px solid ${T.border2}`, color: T.dark }} />
-                  <Bar dataKey="value" radius={[0, 0, 0, 0]}>
-                    {netWorthPie.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <CardTitle>Liabilities Breakdown</CardTitle>
+              <div style={{ marginTop: 8 }}>
+                {[
+                  { label: "Mortgage", value: liveMortgage },
+                  { label: "Credit Cards", value: liveDebt },
+                ].map(row => (
+                  <div key={row.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 4px", borderBottom: `1px solid ${T.border}` }}>
+                    <span style={{ fontFamily: T.fontSans, fontSize: 15, color: T.dark }}>{row.label}</span>
+                    <span style={{ fontFamily: T.fontSans, fontSize: 15, fontWeight: 500, color: T.red }}>{fmtFull(row.value)}</span>
+                  </div>
+                ))}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 4px", borderBottom: `1px solid ${T.border}` }}>
+                  <span style={{ fontFamily: T.fontSans, fontSize: 13, letterSpacing: "0.08em", textTransform: "uppercase", color: T.muted }}>Total Liabilities</span>
+                  <span style={{ fontFamily: T.fontSans, fontSize: 15, fontWeight: 600, color: T.red }}>{fmtFull(liveLiabilities)}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 4px 4px" }}>
+                  <span style={{ fontFamily: T.fontSans, fontSize: 13, letterSpacing: "0.08em", textTransform: "uppercase", color: T.muted }}>Net Equity</span>
+                  <span style={{ fontFamily: T.fontSerif, fontSize: "1.6rem", fontWeight: 600, color: liveNetWorth < 0 ? T.red : T.green }}>{fmtFull(liveNetWorth)}</span>
+                </div>
+              </div>
             </Card>
           </div>
         </>
@@ -1019,7 +1032,7 @@ export default function BudgetDashboard() {
               onChange={e => setEditingAccount({ ...editingAccount, type: e.target.value })}
               style={fieldStyle}
             >
-              {["Checking", "Savings", "Credit Card", "Investment", "Retirement", "Asset"].map(t => (
+              {ACCOUNT_TYPES.map(t => (
                 <option key={t} value={t}>{t}</option>
               ))}
             </select>
@@ -1073,7 +1086,7 @@ export default function BudgetDashboard() {
               onChange={e => setNewAccount(p => ({ ...p, type: e.target.value }))}
               style={fieldStyle}
             >
-              {["Checking", "Savings", "Credit Card", "Investment", "Retirement", "Asset"].map(t => (
+              {ACCOUNT_TYPES.map(t => (
                 <option key={t} value={t}>{t}</option>
               ))}
             </select>

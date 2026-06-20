@@ -54,6 +54,9 @@ const fillMissingMonths = (saved) => {
 };
 
 // ── Hardcoded defaults (fallback of last resort) ────────────
+// Reference (user updates these via the UI; persisted to Supabase):
+//   "Home Equity" → rename to "Home Value", balance 2,074,000, type Asset
+//   add "Home Mortgage", type Mortgage, balance 891,249
 const initialAccounts = [
   { id: 1, name: "Chase Sapphire", type: "Credit Card", balance: 0, lastUpdated: "2026-03-29" },
   { id: 2, name: "Capital One MC", type: "Credit Card", balance: 1320.23, lastUpdated: "2026-03-29" },
