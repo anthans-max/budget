@@ -6,6 +6,14 @@ import {
 } from "recharts";
 import { useBudgetData, monthNames } from "./useBudgetData";
 
+// Balances tab — account groupings, in display order. Subtotals use T.red for debt.
+const BALANCE_GROUPS = [
+  { label: "Checking", types: ["Checking"] },
+  { label: "Credit Cards", types: ["Credit Card"], debt: true },
+  { label: "Investments & Retirement", types: ["Investment", "Retirement"] },
+  { label: "Assets", types: ["Asset"] },
+];
+
 const netWorthItems = [
   { name: "Savings", value: 240000 },
   { name: "Robinhood", value: 0 },
@@ -256,6 +264,91 @@ const Btn = ({ onClick, children, variant = "primary", style = {} }) => (
 const editBtnStyle = { border: `1px solid ${T.border2}`, background: "transparent", color: T.muted, fontFamily: T.fontSans, fontSize: 13, padding: "7px 16px", cursor: "pointer", letterSpacing: "0.04em" };
 const removeBtnStyle = { ...editBtnStyle, color: T.red, borderColor: "rgba(165,67,43,0.32)" };
 
+// ── Inline table editing ─────────────────────────────────────
+const cellInputStyle = { background: "#fff", border: `1px solid ${T.green}`, padding: "4px 8px", width: "100%", fontFamily: T.fontSans, fontSize: 15, textAlign: "right", boxSizing: "border-box", outline: "none" };
+
+// Numeric input for an inline table cell. Reports a Number via onChange;
+// reuses the comma-formatting/paste-sanitizing behavior of <Input>.
+const CellInput = ({ value, onChange, onKeyDown, onBlur, autoFocus }) => {
+  const [display, setDisplay] = useState(() => formatComma(String(value ?? 0)));
+  const focused = useRef(false);
+  useEffect(() => {
+    if (!focused.current) setDisplay(formatComma(String(value ?? 0)));
+  }, [value]);
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      autoFocus={autoFocus}
+      value={display}
+      onFocus={e => { focused.current = true; e.target.select(); }}
+      onPaste={e => {
+        e.preventDefault();
+        const pasted = e.clipboardData.getData("text").replace(/[$,\s]/g, "");
+        if (pasted === "" || /^-?\d*\.?\d*$/.test(pasted)) {
+          setDisplay(formatComma(pasted));
+          const num = parseFloat(pasted);
+          onChange(isNaN(num) ? 0 : num);
+        }
+      }}
+      onChange={e => {
+        const raw = e.target.value.replace(/,/g, "");
+        if (raw === "" || /^-?\d*\.?\d*$/.test(raw)) {
+          setDisplay(formatComma(raw));
+          const num = parseFloat(raw);
+          onChange(isNaN(num) ? 0 : num);
+        }
+      }}
+      onKeyDown={onKeyDown}
+      onBlur={e => { focused.current = false; onBlur?.(e); }}
+      style={cellInputStyle}
+    />
+  );
+};
+
+// A monthly table row in edit mode: every income/expense cell is a CellInput
+// bound to a local draft, with Total In/Exp/Balance recomputed live. Commits on
+// Enter or when focus leaves the row; Escape reverts.
+const InlineEditRow = ({ row, cats, autoFocusField, onSave, onCancel }) => {
+  const [draft, setDraft] = useState(() => ({ ...row }));
+  const rowRef = useRef(null);
+  const incCats = cats.filter(c => c.type === "income");
+  const expCats = cats.filter(c => c.type === "expense");
+  const totalIn = incCats.reduce((s, c) => s + (draft[c.id] || 0), 0);
+  const totalExp = expCats.reduce((s, c) => s + (draft[c.id] || 0), 0);
+  const bal = totalIn - totalExp;
+  const cellStyle = { textAlign: "right", padding: "10px 12px", color: T.muted, fontFamily: T.fontSans, fontSize: 15 };
+  const handleKeyDown = e => {
+    if (e.key === "Enter") { e.preventDefault(); onSave(draft); }
+    else if (e.key === "Escape") { e.preventDefault(); onCancel(); }
+  };
+  // Save only when focus moves outside this row (not when tabbing between cells).
+  const handleBlur = e => {
+    if (!rowRef.current || !rowRef.current.contains(e.relatedTarget)) onSave(draft);
+  };
+  const editCell = (cat) => (
+    <td key={cat.id} style={{ padding: "4px 8px" }}>
+      <CellInput
+        value={draft[cat.id] || 0}
+        autoFocus={cat.id === autoFocusField}
+        onChange={v => setDraft(p => ({ ...p, [cat.id]: v }))}
+        onKeyDown={handleKeyDown}
+        onBlur={handleBlur}
+      />
+    </td>
+  );
+  return (
+    <tr ref={rowRef} style={{ height: 52, borderBottom: `1px solid ${T.border}`, background: "#f5f2eb" }}>
+      <td style={{ padding: "10px 12px", color: T.dark, fontWeight: 500, fontFamily: T.fontSans, fontSize: 15 }}>{row.period}</td>
+      {incCats.map(editCell)}
+      <td style={{ ...cellStyle, color: T.green, fontWeight: 500 }}>{totalIn === 0 ? "—" : fmtFull(totalIn)}</td>
+      {expCats.map(editCell)}
+      <td style={{ ...cellStyle, color: T.red, fontWeight: 500 }}>{totalExp === 0 ? "—" : fmtFull(totalExp)}</td>
+      <td style={{ ...cellStyle, color: bal < 0 ? T.red : T.green, fontWeight: 500 }}>{fmtFull(bal)}</td>
+    </tr>
+  );
+};
+
 // ═════════════════════════════════════════════════════════════
 // MAIN DASHBOARD
 // ═════════════════════════════════════════════════════════════
@@ -275,6 +368,7 @@ export default function BudgetDashboard() {
   const [newBizCategoryForm, setNewBizCategoryForm] = useState({ label: "", type: "expense" });
   const [editingBizMonth, setEditingBizMonth] = useState(null);
   const [editingBizMonthDraft, setEditingBizMonthDraft] = useState(null);
+  const [inlineEdit, setInlineEdit] = useState(null); // { table: "budget"|"business", period, field }
 
   // ── Responsive detection ─────────────────────────────────
   const [isMobile, setIsMobile] = useState(window.innerWidth < 760);
@@ -397,6 +491,19 @@ export default function BudgetDashboard() {
     });
   }, [personalCategories]);
 
+  // ── Month-row save (shared by inline editing + edit modals) ──
+  const savePersonalMonth = useCallback((d) => {
+    const totalIncome = personalCategories.filter(c => c.type === "income").reduce((s, c) => s + (d[c.id] || 0), 0);
+    const totalExpense = personalCategories.filter(c => c.type === "expense").reduce((s, c) => s + (d[c.id] || 0), 0);
+    setBudget(prev => prev.map(r =>
+      r.period === d.period ? { ...d, totalIncome, totalExpense, balance: totalIncome - totalExpense } : r
+    ));
+  }, [personalCategories]);
+
+  const saveBizMonth = useCallback((d) => {
+    setBusinessMonthly(prev => prev.map(r => r.period === d.period ? { ...d } : r));
+  }, []);
+
   // ── Render helpers for Budget / Business tabs ─────────────
   const sumByType = (rows, cats, type) =>
     rows.reduce((s, r) => s + cats.filter(c => c.type === type).reduce((sc, c) => sc + (r[c.id] || 0), 0), 0);
@@ -416,7 +523,8 @@ export default function BudgetDashboard() {
     );
   };
 
-  const renderBudgetTable = (rows, cats, onEdit) => {
+  const renderBudgetTable = (rows, cats, tableKey) => {
+    const saveMonth = tableKey === "budget" ? savePersonalMonth : saveBizMonth;
     const headerCellStyle = (align) => ({
       textAlign: align, padding: "10px 12px", background: HEADER_BG,
       color: T.dark, fontWeight: 600, fontSize: 12, whiteSpace: "nowrap",
@@ -428,35 +536,47 @@ export default function BudgetDashboard() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: Math.max(900, 300 + cats.length * 100) }}>
           <thead>
             <tr>
-              {["Period", ...cats.filter(c => c.type === "income").map(c => c.label), "Total In", ...cats.filter(c => c.type === "expense").map(c => c.label), "Total Exp", "Balance", ""].map((h, hi) => (
-                <th key={`${h}-${hi}`} style={headerCellStyle(h === "Period" || h === "" ? "left" : "right")}>{h}</th>
+              {["Period", ...cats.filter(c => c.type === "income").map(c => c.label), "Total In", ...cats.filter(c => c.type === "expense").map(c => c.label), "Total Exp", "Balance"].map((h, hi) => (
+                <th key={`${h}-${hi}`} style={headerCellStyle(h === "Period" ? "left" : "right")}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, i) => (
-              <tr key={i} style={{ height: 52, borderBottom: `1px solid ${T.border}` }} onMouseEnter={e => e.currentTarget.style.background = "rgba(20,22,15,0.03)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                <td style={{ padding: "10px 12px", color: T.dark, fontWeight: 500, fontFamily: T.fontSans, fontSize: 15 }}>{row.period}</td>
-                {(() => {
-                  const incCats = cats.filter(c => c.type === "income");
-                  const expCats = cats.filter(c => c.type === "expense");
-                  const totalIn = incCats.reduce((s, c) => s + (row[c.id] || 0), 0);
-                  const totalExp = expCats.reduce((s, c) => s + (row[c.id] || 0), 0);
-                  const bal = totalIn - totalExp;
-                  const cellStyle = { textAlign: "right", padding: "10px 12px", color: T.muted, fontFamily: T.fontSans, fontSize: 15 };
-                  return (<>
-                    {incCats.map(cat => <td key={cat.id} style={cellStyle}>{(row[cat.id] || 0) === 0 ? "—" : fmtFull(row[cat.id])}</td>)}
-                    <td style={{ ...cellStyle, color: T.green, fontWeight: 500 }}>{totalIn === 0 ? "—" : fmtFull(totalIn)}</td>
-                    {expCats.map(cat => <td key={cat.id} style={cellStyle}>{(row[cat.id] || 0) === 0 ? "—" : fmtFull(row[cat.id])}</td>)}
-                    <td style={{ ...cellStyle, color: T.red, fontWeight: 500 }}>{totalExp === 0 ? "—" : fmtFull(totalExp)}</td>
-                    <td style={{ ...cellStyle, color: bal < 0 ? T.red : T.green, fontWeight: 500 }}>{fmtFull(bal)}</td>
-                  </>);
-                })()}
-                <td style={{ padding: "10px 12px" }}>
-                  <button onClick={() => onEdit(row)} style={editBtnStyle}>Edit</button>
+            {rows.map((row, i) => {
+              if (inlineEdit && inlineEdit.table === tableKey && inlineEdit.period === row.period) {
+                return (
+                  <InlineEditRow
+                    key={i}
+                    row={row}
+                    cats={cats}
+                    autoFocusField={inlineEdit.field}
+                    onSave={d => { saveMonth(d); setInlineEdit(null); }}
+                    onCancel={() => setInlineEdit(null)}
+                  />
+                );
+              }
+              const incCats = cats.filter(c => c.type === "income");
+              const expCats = cats.filter(c => c.type === "expense");
+              const totalIn = incCats.reduce((s, c) => s + (row[c.id] || 0), 0);
+              const totalExp = expCats.reduce((s, c) => s + (row[c.id] || 0), 0);
+              const bal = totalIn - totalExp;
+              const cellStyle = { textAlign: "right", padding: "10px 12px", color: T.muted, fontFamily: T.fontSans, fontSize: 15 };
+              const editableCell = (cat) => (
+                <td key={cat.id} style={{ ...cellStyle, cursor: "pointer" }} onClick={() => setInlineEdit({ table: tableKey, period: row.period, field: cat.id })}>
+                  {(row[cat.id] || 0) === 0 ? "—" : fmtFull(row[cat.id])}
                 </td>
-              </tr>
-            ))}
+              );
+              return (
+                <tr key={i} style={{ height: 52, borderBottom: `1px solid ${T.border}` }} onMouseEnter={e => e.currentTarget.style.background = "rgba(20,22,15,0.03)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                  <td style={{ padding: "10px 12px", color: T.dark, fontWeight: 500, fontFamily: T.fontSans, fontSize: 15 }}>{row.period}</td>
+                  {incCats.map(editableCell)}
+                  <td style={{ ...cellStyle, color: T.green, fontWeight: 500 }}>{totalIn === 0 ? "—" : fmtFull(totalIn)}</td>
+                  {expCats.map(editableCell)}
+                  <td style={{ ...cellStyle, color: T.red, fontWeight: 500 }}>{totalExp === 0 ? "—" : fmtFull(totalExp)}</td>
+                  <td style={{ ...cellStyle, color: bal < 0 ? T.red : T.green, fontWeight: 500 }}>{fmtFull(bal)}</td>
+                </tr>
+              );
+            })}
           </tbody>
           <tfoot>
             <tr style={{ borderTop: `1.5px solid ${T.border2}` }}>
@@ -470,7 +590,6 @@ export default function BudgetDashboard() {
               ))}
               <td style={totalsCellStyle(T.red)}>{fmtFull(sumByType(rows, cats, "expense"))}</td>
               <td style={totalsCellStyle(T.dark)}>{fmtFull(sumByType(rows, cats, "income") - sumByType(rows, cats, "expense"))}</td>
-              <td></td>
             </tr>
           </tfoot>
         </table>
@@ -685,7 +804,7 @@ export default function BudgetDashboard() {
             </div>
             {isMobile
               ? renderBudgetCards(monthlyBudget, personalCategories, (row) => { setEditingMonthDraft({ ...row }); setEditingMonth(row.period); })
-              : renderBudgetTable(monthlyBudget, personalCategories, (row) => { setEditingMonthDraft({ ...row }); setEditingMonth(row.period); })}
+              : renderBudgetTable(monthlyBudget, personalCategories, "budget")}
           </Card>
         </>
       )}
@@ -701,7 +820,7 @@ export default function BudgetDashboard() {
             </div>
             {isMobile
               ? renderBudgetCards(businessMonthly, businessCategories, (row) => { setEditingBizMonthDraft({ ...row }); setEditingBizMonth(row.period); })
-              : renderBudgetTable(businessMonthly, businessCategories, (row) => { setEditingBizMonthDraft({ ...row }); setEditingBizMonth(row.period); })}
+              : renderBudgetTable(businessMonthly, businessCategories, "business")}
           </Card>
         </>
       )}
@@ -722,34 +841,51 @@ export default function BudgetDashboard() {
               <Btn onClick={() => setAddingAccount(true)} variant="primary">+ Add Account</Btn>
             </div>
             <div>
-              {[...accounts].sort((a, b) => a.type.localeCompare(b.type)).map((a) => {
-                const isDebt = a.type === "Credit Card";
+              {BALANCE_GROUPS.map((group, gi) => {
+                const groupAccounts = safeAccounts.filter(a => group.types.includes(a.type));
+                if (groupAccounts.length === 0) return null;
+                const subtotal = groupAccounts.reduce((s, a) => s + a.balance, 0);
                 return (
-                  <div key={a.id} style={{
-                    display: "flex", flexDirection: isMobile ? "column" : "row",
-                    alignItems: isMobile ? "stretch" : "center", justifyContent: "space-between",
-                    gap: isMobile ? 12 : 16,
-                    background: T.surface, border: `1px solid ${T.border}`, padding: "14px 18px", marginBottom: 6,
-                  }}>
-                    <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", gap: isMobile ? 6 : 12 }}>
-                      <span style={{ fontFamily: T.fontSans, fontSize: 15, color: T.dark }}>{a.name}</span>
-                      <span style={{
-                        display: "inline-block", padding: "3px 9px",
-                        fontFamily: T.fontSans, fontSize: 12, fontWeight: 500,
-                        letterSpacing: "0.08em", textTransform: "uppercase",
-                        background: CHIP_BG, color: isDebt ? T.red : T.dark,
-                      }}>{a.type}</span>
+                  <div key={group.label} style={{ marginTop: gi === 0 ? 0 : 20 }}>
+                    <div style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "baseline",
+                      fontFamily: T.fontSans, fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase",
+                      color: T.muted, padding: "16px 18px 8px", borderBottom: `1px solid ${T.border}`,
+                    }}>
+                      <span>{group.label}</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: group.debt ? T.red : T.dark }}>{fmtFull(subtotal)}</span>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: isMobile ? "space-between" : "flex-end", gap: 16, width: isMobile ? "100%" : "auto" }}>
-                      <div style={{ textAlign: isMobile ? "left" : "right" }}>
-                        <div style={{ fontFamily: T.fontSans, fontWeight: 500, fontSize: 15, color: isDebt && a.balance > 0 ? T.red : T.dark }}>{fmtFull(a.balance)}</div>
-                        <div style={{ fontSize: 13, color: T.faint, fontFamily: T.fontSans }}>{a.lastUpdated}</div>
-                      </div>
-                      <div style={{ display: "flex", gap: 6 }}>
-                        <button onClick={() => setEditingAccount(a)} style={editBtnStyle}>Update</button>
-                        <button onClick={() => removeAccount(a.id)} style={removeBtnStyle}>Remove</button>
-                      </div>
-                    </div>
+                    {groupAccounts.map((a) => {
+                      const isDebt = a.type === "Credit Card";
+                      return (
+                        <div key={a.id} style={{
+                          display: "flex", flexDirection: isMobile ? "column" : "row",
+                          alignItems: isMobile ? "stretch" : "center", justifyContent: "space-between",
+                          gap: isMobile ? 12 : 16,
+                          background: T.surface, border: `1px solid ${T.border}`, padding: "14px 18px", paddingLeft: 28, marginBottom: 6,
+                        }}>
+                          <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", gap: isMobile ? 6 : 12 }}>
+                            <span style={{ fontFamily: T.fontSans, fontSize: 15, color: T.dark }}>{a.name}</span>
+                            <span style={{
+                              display: "inline-block", padding: "3px 9px",
+                              fontFamily: T.fontSans, fontSize: 12, fontWeight: 500,
+                              letterSpacing: "0.08em", textTransform: "uppercase",
+                              background: CHIP_BG, color: isDebt ? T.red : T.dark,
+                            }}>{a.type}</span>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: isMobile ? "space-between" : "flex-end", gap: 16, width: isMobile ? "100%" : "auto" }}>
+                            <div style={{ textAlign: isMobile ? "left" : "right" }}>
+                              <div style={{ fontFamily: T.fontSans, fontWeight: 500, fontSize: 15, color: isDebt && a.balance > 0 ? T.red : T.dark }}>{fmtFull(a.balance)}</div>
+                              <div style={{ fontSize: 13, color: T.faint, fontFamily: T.fontSans }}>{a.lastUpdated}</div>
+                            </div>
+                            <div style={{ display: "flex", gap: 6 }}>
+                              <button onClick={() => setEditingAccount(a)} style={editBtnStyle}>Update</button>
+                              <button onClick={() => removeAccount(a.id)} style={removeBtnStyle}>Remove</button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               })}
@@ -854,14 +990,7 @@ export default function BudgetDashboard() {
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 16 }}>
             <Btn variant="secondary" onClick={() => { setEditingMonth(null); setEditingMonthDraft(null); }}>Cancel</Btn>
             <Btn onClick={() => {
-              const d = editingMonthDraft;
-              const totalIncome = personalCategories.filter(c => c.type === "income").reduce((s, c) => s + (d[c.id] || 0), 0);
-              const totalExpense = personalCategories.filter(c => c.type === "expense").reduce((s, c) => s + (d[c.id] || 0), 0);
-              setBudget(prev => prev.map(r =>
-                r.period === d.period
-                  ? { ...d, totalIncome, totalExpense, balance: totalIncome - totalExpense }
-                  : r
-              ));
+              savePersonalMonth(editingMonthDraft);
               setEditingMonth(null);
               setEditingMonthDraft(null);
             }}>Save</Btn>
@@ -973,8 +1102,7 @@ export default function BudgetDashboard() {
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 16 }}>
             <Btn variant="secondary" onClick={() => { setEditingBizMonth(null); setEditingBizMonthDraft(null); }}>Cancel</Btn>
             <Btn onClick={() => {
-              const d = editingBizMonthDraft;
-              setBusinessMonthly(prev => prev.map(r => r.period === d.period ? { ...d } : r));
+              saveBizMonth(editingBizMonthDraft);
               setEditingBizMonth(null);
               setEditingBizMonthDraft(null);
             }}>Save</Btn>
