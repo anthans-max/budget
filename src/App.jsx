@@ -313,6 +313,8 @@ export default function BudgetDashboard() {
   const [tab, setTab] = useState("overview");
   const { isReady, accounts, setAccounts, budget, setBudget, personalCategories, setPersonalCategories, businessBudget, setBusinessBudget, businessCategories, setBusinessCategories, businessMonthly, setBusinessMonthly } = useBudgetData();
   const [editingAccount, setEditingAccount] = useState(null);
+  const [editingBalance, setEditingBalance] = useState(null); // { accountId, draft: string }
+  const balanceCancelRef = useRef(false);
   const [addingAccount, setAddingAccount] = useState(false);
   const [newAccount, setNewAccount] = useState({ name: "", type: "Checking", balance: 0 });
   const [overviewRange, setOverviewRange] = useState("ytd");
@@ -356,6 +358,18 @@ export default function BudgetDashboard() {
     safeAccounts.filter(a => ["Investment", "Retirement"].includes(a.type)).reduce((s, a) => s + a.balance, 0), [safeAccounts]);
   const totalAssets = useMemo(() =>
     safeAccounts.filter(a => a.type === "Asset").reduce((s, a) => s + a.balance, 0), [safeAccounts]);
+
+  // Live balances: while a balance cell is being edited, substitute its draft so
+  // group subtotals and the Balances KPI cards update as the user types.
+  const liveBalance = (a) =>
+    editingBalance && editingBalance.accountId === a.id
+      ? (parseFloat(editingBalance.draft.replace(/,/g, "")) || 0)
+      : a.balance;
+  const liveTotal = (filterFn) => safeAccounts.filter(filterFn).reduce((s, a) => s + liveBalance(a), 0);
+  const liveCash = liveTotal(a => ["Checking", "Savings"].includes(a.type));
+  const liveInvestments = liveTotal(a => ["Investment", "Retirement"].includes(a.type));
+  const liveAssets = liveTotal(a => a.type === "Asset");
+  const liveDebt = liveTotal(a => a.type === "Credit Card");
   const netWorth = useMemo(() => {
     const nw = netWorthItems.reduce((s, i) => s + i.value, 0);
     return nw;
@@ -419,6 +433,14 @@ export default function BudgetDashboard() {
       a.id === updated.id ? { ...updated, lastUpdated: new Date().toISOString().split("T")[0] } : a
     ));
   }, []);
+
+  // Commit the inline-edited balance for account `a` (reads editingBalance.draft).
+  const saveBalance = (a) => {
+    if (!editingBalance) return;
+    const num = parseFloat(editingBalance.draft.replace(/,/g, ""));
+    updateAccount({ ...a, balance: isNaN(num) ? 0 : num });
+    setEditingBalance(null);
+  };
 
   const addAccount = useCallback(() => {
     setAccounts(prev => [...prev, {
@@ -845,10 +867,10 @@ export default function BudgetDashboard() {
       {tab === "balances" && (
         <>
           <div style={{ display: "flex", gap: 14, marginBottom: 22, flexWrap: "wrap" }}>
-            <KPI title="Cash & Checking" value={fmtFull(totalCash)} accent={T.green} color={T.green} />
-            <KPI title="Investments & Retirement" value={fmtFull(totalInvestments)} accent={T.copper} color={T.dark} />
-            <KPI title="Real Estate & Assets" value={fmtFull(totalAssets)} accent={T.copper} color={T.dark} />
-            <KPI title="Credit Card Debt" value={fmtFull(totalDebt)} accent={T.red} negative={totalDebt > 0} color={T.red} />
+            <KPI title="Cash & Checking" value={fmtFull(liveCash)} accent={T.green} color={T.green} />
+            <KPI title="Investments & Retirement" value={fmtFull(liveInvestments)} accent={T.copper} color={T.dark} />
+            <KPI title="Real Estate & Assets" value={fmtFull(liveAssets)} accent={T.copper} color={T.dark} />
+            <KPI title="Credit Card Debt" value={fmtFull(liveDebt)} accent={T.red} negative={liveDebt > 0} color={T.red} />
           </div>
 
           <Card>
@@ -860,7 +882,7 @@ export default function BudgetDashboard() {
               {BALANCE_GROUPS.map((group, gi) => {
                 const groupAccounts = safeAccounts.filter(a => group.types.includes(a.type));
                 if (groupAccounts.length === 0) return null;
-                const subtotal = groupAccounts.reduce((s, a) => s + a.balance, 0);
+                const subtotal = groupAccounts.reduce((s, a) => s + liveBalance(a), 0);
                 return (
                   <div key={group.label} style={{ marginTop: gi === 0 ? 0 : 20 }}>
                     <div style={{
@@ -891,11 +913,38 @@ export default function BudgetDashboard() {
                           </div>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: isMobile ? "space-between" : "flex-end", gap: 16, width: isMobile ? "100%" : "auto" }}>
                             <div style={{ textAlign: isMobile ? "left" : "right" }}>
-                              <div style={{ fontFamily: T.fontSans, fontWeight: 500, fontSize: 15, color: isDebt && a.balance > 0 ? T.red : T.dark }}>{fmtFull(a.balance)}</div>
+                              {editingBalance && editingBalance.accountId === a.id ? (
+                                <input
+                                  autoFocus
+                                  type="text"
+                                  inputMode="decimal"
+                                  value={editingBalance.draft}
+                                  onFocus={e => e.target.select()}
+                                  onChange={e => {
+                                    const raw = e.target.value.replace(/,/g, "");
+                                    if (raw === "" || /^-?\d*\.?\d*$/.test(raw)) setEditingBalance({ accountId: a.id, draft: formatComma(raw) });
+                                  }}
+                                  onKeyDown={e => {
+                                    if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); }
+                                    else if (e.key === "Escape") { e.preventDefault(); balanceCancelRef.current = true; e.currentTarget.blur(); }
+                                  }}
+                                  onBlur={() => {
+                                    if (balanceCancelRef.current) { balanceCancelRef.current = false; setEditingBalance(null); return; }
+                                    saveBalance(a);
+                                  }}
+                                  style={{ background: "#fff", border: `1px solid ${T.green}`, padding: "4px 8px", textAlign: "right", fontFamily: T.fontSans, fontSize: 15, width: 120, outline: "none" }}
+                                />
+                              ) : (
+                                <div
+                                  onClick={() => setEditingBalance({ accountId: a.id, draft: formatComma(String(a.balance)) })}
+                                  onMouseEnter={e => e.currentTarget.style.borderBottomColor = T.green}
+                                  onMouseLeave={e => e.currentTarget.style.borderBottomColor = "transparent"}
+                                  style={{ display: "inline-block", fontFamily: T.fontSans, fontWeight: 500, fontSize: 15, color: isDebt && a.balance > 0 ? T.red : T.dark, cursor: "pointer", borderBottom: "1px solid transparent" }}
+                                >{fmtFull(a.balance)}</div>
+                              )}
                               <div style={{ fontSize: 13, color: T.faint, fontFamily: T.fontSans }}>{a.lastUpdated}</div>
                             </div>
                             <div style={{ display: "flex", gap: 6 }}>
-                              <button onClick={() => setEditingAccount(a)} style={editBtnStyle}>Update</button>
                               <button onClick={() => removeAccount(a.id)} style={removeBtnStyle}>Remove</button>
                             </div>
                           </div>
