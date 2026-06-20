@@ -29,6 +29,17 @@ const fmtFull = (n) => {
   const neg = n < 0;
   return (neg ? "-" : "") + "$" + Math.round(Math.abs(n)).toLocaleString("en-US");
 };
+// Format a raw numeric string with thousands separators, preserving an
+// in-progress trailing decimal (e.g. "1000." → "1,000.", "1000.5" → "1,000.5").
+const formatComma = (raw) => {
+  if (raw === "" || raw === "-") return raw;
+  const neg = raw.startsWith("-");
+  const [intPart, decPart] = raw.replace("-", "").split(".");
+  const intFmt = intPart === "" ? "" : Number(intPart).toLocaleString("en-US");
+  let out = (neg ? "-" : "") + intFmt;
+  if (raw.includes(".")) out += "." + (decPart ?? "");
+  return out;
+};
 
 // ── Design Tokens ────────────────────────────────────────────
 const T = {
@@ -170,11 +181,12 @@ const Modal = ({ title, onClose, children }) => (
 const labelStyle = { display: "block", fontSize: 10, fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: T.muted, marginBottom: 5, fontFamily: T.fontSans };
 const fieldStyle = { width: "100%", padding: "10px 12px", background: T.bg, border: `1px solid ${T.border2}`, fontSize: 15, color: T.dark, fontFamily: T.fontSans, outline: "none", boxSizing: "border-box" };
 
-const Input = ({ label, value, onChange, type = "number" }) => {
-  const [display, setDisplay] = useState(() => type === "number" ? String(value ?? 0) : value);
+const Input = ({ label, value, onChange, type = "number", comma = false }) => {
+  const numDisplay = (v) => comma ? Number(v ?? 0).toLocaleString("en-US") : String(v ?? 0);
+  const [display, setDisplay] = useState(() => type === "number" ? numDisplay(value) : value);
   const focused = useRef(false);
   useEffect(() => {
-    if (!focused.current) setDisplay(type === "number" ? String(value ?? 0) : value);
+    if (!focused.current) setDisplay(type === "number" ? numDisplay(value) : value);
   }, [value, type]);
   if (type !== "number") {
     return (
@@ -196,24 +208,24 @@ const Input = ({ label, value, onChange, type = "number" }) => {
           e.preventDefault();
           const pasted = e.clipboardData.getData("text").replace(/[$,\s]/g, "");
           if (pasted === "" || /^-?\d*\.?\d*$/.test(pasted)) {
-            setDisplay(pasted);
+            setDisplay(comma ? formatComma(pasted) : pasted);
             const num = parseFloat(pasted);
             if (!isNaN(num)) onChange(num);
           }
         }}
         onChange={e => {
-          const raw = e.target.value;
+          const raw = e.target.value.replace(/,/g, "");
           if (raw === "" || /^-?\d*\.?\d*$/.test(raw)) {
-            setDisplay(raw);
+            setDisplay(comma ? formatComma(raw) : raw);
             const num = parseFloat(raw);
             if (!isNaN(num)) onChange(num);
           }
         }}
         onBlur={() => {
           focused.current = false;
-          const num = parseFloat(display);
+          const num = parseFloat(display.replace(/,/g, ""));
           const final = isNaN(num) ? 0 : num;
-          setDisplay(String(final));
+          setDisplay(numDisplay(final));
           onChange(final);
         }}
         style={fieldStyle}
@@ -811,7 +823,7 @@ export default function BudgetDashboard() {
               ))}
             </select>
           </div>
-          <Input label="Balance" value={editingAccount.balance} onChange={v => setEditingAccount({ ...editingAccount, balance: v })} />
+          <Input label="Balance" comma value={editingAccount.balance} onChange={v => setEditingAccount({ ...editingAccount, balance: v })} />
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
             <Btn variant="secondary" onClick={() => setEditingAccount(null)}>Cancel</Btn>
             <Btn onClick={() => { updateAccount(editingAccount); setEditingAccount(null); }}>Save</Btn>
@@ -872,7 +884,7 @@ export default function BudgetDashboard() {
               ))}
             </select>
           </div>
-          <Input label="Balance" value={newAccount.balance} onChange={v => setNewAccount(p => ({ ...p, balance: v }))} />
+          <Input label="Balance" comma value={newAccount.balance} onChange={v => setNewAccount(p => ({ ...p, balance: v }))} />
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
             <Btn variant="secondary" onClick={() => setAddingAccount(false)}>Cancel</Btn>
             <Btn onClick={addAccount}>Add Account</Btn>
