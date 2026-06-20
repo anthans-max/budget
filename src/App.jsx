@@ -306,49 +306,6 @@ const CellInput = ({ value, onChange, onKeyDown, onBlur, autoFocus }) => {
   );
 };
 
-// A monthly table row in edit mode: every income/expense cell is a CellInput
-// bound to a local draft, with Total In/Exp/Balance recomputed live. Commits on
-// Enter or when focus leaves the row; Escape reverts.
-const InlineEditRow = ({ row, cats, autoFocusField, onSave, onCancel }) => {
-  const [draft, setDraft] = useState(() => ({ ...row }));
-  const rowRef = useRef(null);
-  const incCats = cats.filter(c => c.type === "income");
-  const expCats = cats.filter(c => c.type === "expense");
-  const totalIn = incCats.reduce((s, c) => s + (draft[c.id] || 0), 0);
-  const totalExp = expCats.reduce((s, c) => s + (draft[c.id] || 0), 0);
-  const bal = totalIn - totalExp;
-  const cellStyle = { textAlign: "right", padding: "10px 12px", color: T.muted, fontFamily: T.fontSans, fontSize: 15 };
-  const handleKeyDown = e => {
-    if (e.key === "Enter") { e.preventDefault(); onSave(draft); }
-    else if (e.key === "Escape") { e.preventDefault(); onCancel(); }
-  };
-  // Save only when focus moves outside this row (not when tabbing between cells).
-  const handleBlur = e => {
-    if (!rowRef.current || !rowRef.current.contains(e.relatedTarget)) onSave(draft);
-  };
-  const editCell = (cat) => (
-    <td key={cat.id} style={{ padding: "4px 8px" }}>
-      <CellInput
-        value={draft[cat.id] || 0}
-        autoFocus={cat.id === autoFocusField}
-        onChange={v => setDraft(p => ({ ...p, [cat.id]: v }))}
-        onKeyDown={handleKeyDown}
-        onBlur={handleBlur}
-      />
-    </td>
-  );
-  return (
-    <tr ref={rowRef} style={{ height: 52, borderBottom: `1px solid ${T.border}`, background: "#f5f2eb" }}>
-      <td style={{ padding: "10px 12px", color: T.dark, fontWeight: 500, fontFamily: T.fontSans, fontSize: 15 }}>{row.period}</td>
-      {incCats.map(editCell)}
-      <td style={{ ...cellStyle, color: T.green, fontWeight: 500 }}>{totalIn === 0 ? "—" : fmtFull(totalIn)}</td>
-      {expCats.map(editCell)}
-      <td style={{ ...cellStyle, color: T.red, fontWeight: 500 }}>{totalExp === 0 ? "—" : fmtFull(totalExp)}</td>
-      <td style={{ ...cellStyle, color: bal < 0 ? T.red : T.green, fontWeight: 500 }}>{fmtFull(bal)}</td>
-    </tr>
-  );
-};
-
 // ═════════════════════════════════════════════════════════════
 // MAIN DASHBOARD
 // ═════════════════════════════════════════════════════════════
@@ -368,7 +325,7 @@ export default function BudgetDashboard() {
   const [newBizCategoryForm, setNewBizCategoryForm] = useState({ label: "", type: "expense" });
   const [editingBizMonth, setEditingBizMonth] = useState(null);
   const [editingBizMonthDraft, setEditingBizMonthDraft] = useState(null);
-  const [inlineEdit, setInlineEdit] = useState(null); // { table: "budget"|"business", period, field }
+  const [editingCell, setEditingCell] = useState(null); // { table: "budget"|"business", monthIndex: 0–11, field: cat.id, value }
 
   // ── Responsive detection ─────────────────────────────────
   const [isMobile, setIsMobile] = useState(window.innerWidth < 760);
@@ -523,75 +480,134 @@ export default function BudgetDashboard() {
     );
   };
 
-  const renderBudgetTable = (rows, cats, tableKey) => {
-    const saveMonth = tableKey === "budget" ? savePersonalMonth : saveBizMonth;
-    const headerCellStyle = (align) => ({
-      textAlign: align, padding: "10px 12px", background: HEADER_BG,
-      color: T.dark, fontWeight: 600, fontSize: 12, whiteSpace: "nowrap",
-      textTransform: "uppercase", letterSpacing: "0.14em", fontFamily: T.fontSans,
-    });
-    const totalsCellStyle = (color) => ({ textAlign: "right", padding: "12px 12px", fontWeight: 600, fontSize: 13, color, fontFamily: T.fontSans });
+  // Transposed budget table: categories down the side, months across the top.
+  // Desktop only; single-cell inline editing via editingCell.
+  const renderTransposedBudget = (rows, cats, tableKey) => {
+    const incCats = cats.filter(c => c.type === "income");
+    const expCats = cats.filter(c => c.type === "expense");
+    const saveCell = tableKey === "budget" ? savePersonalMonth : saveBizMonth;
+    const nCols = rows.length + 2; // label + months + total
+
+    // Effective value, applying the in-progress edit so totals update live.
+    const cellVal = (m, catId) =>
+      editingCell && editingCell.table === tableKey && editingCell.monthIndex === m && editingCell.field === catId
+        ? editingCell.value
+        : (rows[m]?.[catId] || 0);
+    const sumTypeMonth = (m, type) => (type === "income" ? incCats : expCats).reduce((s, c) => s + cellVal(m, c.id), 0);
+    const rowTotal = (catId) => rows.reduce((s, _, m) => s + cellVal(m, catId), 0);
+    const typeTotal = (type) => rows.reduce((s, _, m) => s + sumTypeMonth(m, type), 0);
+
+    const commit = () => {
+      if (!editingCell) return;
+      const base = rows[editingCell.monthIndex];
+      if (base) saveCell({ ...base, [editingCell.field]: editingCell.value });
+      setEditingCell(null);
+    };
+
+    const ZEBRA = "#f7f5ef";
+    const headerCell = { padding: "10px 12px", background: HEADER_BG, fontWeight: 600, fontSize: 12, whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.14em", fontFamily: T.fontSans };
+    const dataCell = { textAlign: "right", padding: "12px 10px", minWidth: 90, fontFamily: T.fontSans, fontSize: 15 };
+    const totalCol = { ...dataCell, fontWeight: 600, borderLeft: `1px solid ${T.border}` };
+    const sticky = (bg, z = 2) => ({ position: "sticky", left: 0, background: bg, zIndex: z });
+    const rowLabel = { ...sticky(T.surface), minWidth: 160, textAlign: "left", color: T.dark, fontSize: 15, padding: "12px 16px", fontFamily: T.fontSans };
+    const subtotalLabel = { fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: T.dark, fontFamily: T.fontSans, padding: "12px 16px", textAlign: "left" };
+    const fmtCell = (v) => v === 0 ? "—" : fmtFull(v);
+
+    let dataRowIdx = 0; // continuous counter for alternating row backgrounds
+
+    const sectionHeader = (label) => (
+      <tr key={`sec-${label}`}>
+        <td colSpan={nCols} style={{ background: HEADER_BG, padding: "10px 16px" }}>
+          <span style={{ position: "sticky", left: 16, display: "inline-block", fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: T.muted, fontFamily: T.fontSans, fontWeight: 600 }}>{label}</span>
+        </td>
+      </tr>
+    );
+
+    const catRow = (cat) => {
+      const zebra = dataRowIdx % 2 === 1 ? ZEBRA : "transparent";
+      const stickyBg = dataRowIdx % 2 === 1 ? ZEBRA : T.surface;
+      dataRowIdx += 1;
+      return (
+        <tr key={cat.id}>
+          <td style={{ ...rowLabel, background: stickyBg }}>{cat.label}</td>
+          {rows.map((_, m) => {
+            const isEditing = editingCell && editingCell.table === tableKey && editingCell.monthIndex === m && editingCell.field === cat.id;
+            if (isEditing) {
+              return (
+                <td key={m} style={{ ...dataCell, padding: "4px 8px", background: zebra }}>
+                  <CellInput
+                    value={editingCell.value}
+                    autoFocus
+                    onChange={v => setEditingCell(c => ({ ...c, value: v }))}
+                    onKeyDown={e => {
+                      if (e.key === "Enter") { e.preventDefault(); commit(); }
+                      else if (e.key === "Escape") { e.preventDefault(); setEditingCell(null); }
+                    }}
+                    onBlur={commit}
+                  />
+                </td>
+              );
+            }
+            const v = cellVal(m, cat.id);
+            return (
+              <td key={m} style={{ ...dataCell, background: zebra, color: v === 0 ? T.faint : T.dark, cursor: "pointer" }}
+                onClick={() => setEditingCell({ table: tableKey, monthIndex: m, field: cat.id, value: rows[m]?.[cat.id] || 0 })}>
+                {fmtCell(v)}
+              </td>
+            );
+          })}
+          <td style={{ ...totalCol, background: zebra, color: T.dark }}>{fmtCell(rowTotal(cat.id))}</td>
+        </tr>
+      );
+    };
+
+    const subtotalRow = (label, type, valColor) => (
+      <tr key={`sub-${type}`} style={{ background: HEADER_BG }}>
+        <td style={{ ...subtotalLabel, ...sticky(HEADER_BG) }}>{label}</td>
+        {rows.map((_, m) => {
+          const v = sumTypeMonth(m, type);
+          return <td key={m} style={{ ...dataCell, fontWeight: 600, color: v === 0 ? T.faint : valColor }}>{fmtCell(v)}</td>;
+        })}
+        <td style={{ ...totalCol, color: valColor }}>{fmtCell(typeTotal(type))}</td>
+      </tr>
+    );
+
+    const balanceRow = () => {
+      const topBorder = `2px solid ${T.border}`;
+      const grand = typeTotal("income") - typeTotal("expense");
+      return (
+        <tr style={{ background: T.surface }}>
+          <td style={{ ...subtotalLabel, ...sticky(T.surface), borderTop: topBorder }}>Balance</td>
+          {rows.map((_, m) => {
+            const v = sumTypeMonth(m, "income") - sumTypeMonth(m, "expense");
+            return <td key={m} style={{ ...dataCell, fontWeight: 600, color: v < 0 ? T.red : T.green, borderTop: topBorder }}>{fmtFull(v)}</td>;
+          })}
+          <td style={{ ...totalCol, color: grand < 0 ? T.red : T.green, borderTop: topBorder }}>{fmtFull(grand)}</td>
+        </tr>
+      );
+    };
+
     return (
       <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", background: T.surface, border: `1px solid ${T.border}` }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: Math.max(900, 300 + cats.length * 100) }}>
+        <table style={{ borderCollapse: "collapse", width: "100%", fontFamily: T.fontSans }}>
           <thead>
             <tr>
-              {["Period", ...cats.filter(c => c.type === "income").map(c => c.label), "Total In", ...cats.filter(c => c.type === "expense").map(c => c.label), "Total Exp", "Balance"].map((h, hi) => (
-                <th key={`${h}-${hi}`} style={headerCellStyle(h === "Period" ? "left" : "right")}>{h}</th>
+              <th style={{ ...headerCell, ...sticky(HEADER_BG, 3), minWidth: 160, textAlign: "left" }}></th>
+              {rows.map((r, m) => (
+                <th key={m} style={{ ...headerCell, textAlign: "right", color: m > CURRENT_MONTH_IDX ? T.faint : T.dark }}>{r.period.slice(0, 3)}</th>
               ))}
+              <th style={{ ...headerCell, textAlign: "right", borderLeft: `1px solid ${T.border}` }}>Total</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, i) => {
-              if (inlineEdit && inlineEdit.table === tableKey && inlineEdit.period === row.period) {
-                return (
-                  <InlineEditRow
-                    key={i}
-                    row={row}
-                    cats={cats}
-                    autoFocusField={inlineEdit.field}
-                    onSave={d => { saveMonth(d); setInlineEdit(null); }}
-                    onCancel={() => setInlineEdit(null)}
-                  />
-                );
-              }
-              const incCats = cats.filter(c => c.type === "income");
-              const expCats = cats.filter(c => c.type === "expense");
-              const totalIn = incCats.reduce((s, c) => s + (row[c.id] || 0), 0);
-              const totalExp = expCats.reduce((s, c) => s + (row[c.id] || 0), 0);
-              const bal = totalIn - totalExp;
-              const cellStyle = { textAlign: "right", padding: "10px 12px", color: T.muted, fontFamily: T.fontSans, fontSize: 15 };
-              const editableCell = (cat) => (
-                <td key={cat.id} style={{ ...cellStyle, cursor: "pointer" }} onClick={() => setInlineEdit({ table: tableKey, period: row.period, field: cat.id })}>
-                  {(row[cat.id] || 0) === 0 ? "—" : fmtFull(row[cat.id])}
-                </td>
-              );
-              return (
-                <tr key={i} style={{ height: 52, borderBottom: `1px solid ${T.border}` }} onMouseEnter={e => e.currentTarget.style.background = "rgba(20,22,15,0.03)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  <td style={{ padding: "10px 12px", color: T.dark, fontWeight: 500, fontFamily: T.fontSans, fontSize: 15 }}>{row.period}</td>
-                  {incCats.map(editableCell)}
-                  <td style={{ ...cellStyle, color: T.green, fontWeight: 500 }}>{totalIn === 0 ? "—" : fmtFull(totalIn)}</td>
-                  {expCats.map(editableCell)}
-                  <td style={{ ...cellStyle, color: T.red, fontWeight: 500 }}>{totalExp === 0 ? "—" : fmtFull(totalExp)}</td>
-                  <td style={{ ...cellStyle, color: bal < 0 ? T.red : T.green, fontWeight: 500 }}>{fmtFull(bal)}</td>
-                </tr>
-              );
-            })}
+            {sectionHeader("Income")}
+            {incCats.map(catRow)}
+            {subtotalRow("Total In", "income", T.dark)}
+            {sectionHeader("Expenses")}
+            {expCats.map(catRow)}
+            {subtotalRow("Total Exp", "expense", T.red)}
+            {balanceRow()}
           </tbody>
-          <tfoot>
-            <tr style={{ borderTop: `1.5px solid ${T.border2}` }}>
-              <td style={{ padding: "12px 12px", fontWeight: 600, color: T.dark, fontFamily: T.fontSans, fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase" }}>Totals</td>
-              {cats.filter(c => c.type === "income").map(cat => (
-                <td key={cat.id} style={totalsCellStyle(T.dark)}>{fmtFull(rows.reduce((s, r) => s + (r[cat.id] || 0), 0))}</td>
-              ))}
-              <td style={totalsCellStyle(T.green)}>{fmtFull(sumByType(rows, cats, "income"))}</td>
-              {cats.filter(c => c.type === "expense").map(cat => (
-                <td key={cat.id} style={totalsCellStyle(T.dark)}>{fmtFull(rows.reduce((s, r) => s + (r[cat.id] || 0), 0))}</td>
-              ))}
-              <td style={totalsCellStyle(T.red)}>{fmtFull(sumByType(rows, cats, "expense"))}</td>
-              <td style={totalsCellStyle(T.dark)}>{fmtFull(sumByType(rows, cats, "income") - sumByType(rows, cats, "expense"))}</td>
-            </tr>
-          </tfoot>
         </table>
       </div>
     );
@@ -804,7 +820,7 @@ export default function BudgetDashboard() {
             </div>
             {isMobile
               ? renderBudgetCards(monthlyBudget, personalCategories, (row) => { setEditingMonthDraft({ ...row }); setEditingMonth(row.period); })
-              : renderBudgetTable(monthlyBudget, personalCategories, "budget")}
+              : renderTransposedBudget(monthlyBudget, personalCategories, "budget")}
           </Card>
         </>
       )}
@@ -820,7 +836,7 @@ export default function BudgetDashboard() {
             </div>
             {isMobile
               ? renderBudgetCards(businessMonthly, businessCategories, (row) => { setEditingBizMonthDraft({ ...row }); setEditingBizMonth(row.period); })
-              : renderBudgetTable(businessMonthly, businessCategories, "business")}
+              : renderTransposedBudget(businessMonthly, businessCategories, "business")}
           </Card>
         </>
       )}
